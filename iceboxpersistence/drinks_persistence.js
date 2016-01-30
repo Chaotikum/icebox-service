@@ -1,24 +1,17 @@
-var pg = require('pg');
+var persistence = require('./persistence.js');
+var client = persistence.client;
 
-var connectionString = process.env.DATABASE_URL || 'postgres://iceboxuser:testForIce@localhost:5432/icobox';
-var client = new pg.Client(connectionString);
-client.connect();
-
-exports.test = function () {
-  console.log("lol");
-};
-
-exports.updateDrink = function(fullprice, discountprice, drinkId, quantity){
-  client.query("UPDATE drinks SET fullprice=($1), discountprice=($2), quantity=($4) WHERE id=($3)", [fullprice, discountprice, drinkId, quantity]);
+exports.updateDrink = function(fullprice, discountprice, barcode, quantity){
+  client.query("UPDATE drinks SET fullprice=($1), discountprice=($2), quantity=($4) WHERE barcode=($3)", [fullprice, discountprice, barcode, quantity]);
 };
 
 exports.deleteDrinkById = function(drinkId){
   client.query("DELETE FROM drinks WHERE id=($1)", [drinkId]);
 };
 
-exports.getDrinkById = function(drinkId, callback) {
+exports.getDrinkByBarcode = function(barcode, callback) {
   var results = [];
-  var query = client.query("SELECT id, name, barcode, fullprice, discountprice, quantity FROM drinks WHERE id=($1) ORDER BY id ASC", [drinkId]);
+  var query = client.query("SELECT name, barcode, fullprice, discountprice, quantity FROM drinks WHERE barcode=($1) ORDER BY id ASC", [barcode]);
   query.on('row', function(row) {
     results.push(row);
   });
@@ -29,7 +22,7 @@ exports.getDrinkById = function(drinkId, callback) {
 
 exports.getAllDrinks = function(callback) {
   var results = [];
-  var query = client.query("SELECT id, name, barcode, fullprice, discountprice, quantity FROM drinks ORDER BY id ASC");
+  var query = client.query("SELECT name, barcode, fullprice, discountprice, quantity FROM drinks ORDER BY name ASC");
   query.on('row', function(row) {
     results.push(row);
   });
@@ -40,10 +33,6 @@ exports.getAllDrinks = function(callback) {
 
 exports.insertNewDrink = function(name, barcode, fullprice, discountprice) {
   client.query("INSERT INTO drinks(name, barcode, fullprice, discountprice, quantity) values($1, $2, $3, $4, $5)  ON CONFLICT DO NOTHING", [name, barcode, fullprice, discountprice, 0]);
-};
-
-exports.setUpDepotTable = function() {
-  client.query('CREATE TABLE IF NOT EXISTS depot(id SERIAL PRIMARY KEY, name VARCHAR(200) not null)');
 };
 
 exports.setUpDrinksTable = function() {

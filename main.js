@@ -2,65 +2,125 @@ var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
 
-var connectionString = process.env.DATABASE_URL || 'postgres://iceboxuser:testForIce@localhost:5432/icobox';
+var depot_persis = require('./iceboxpersistence/depot_persistence.js');
+var drink_persis = require('./iceboxpersistence/drinks_persistence.js');
+var consumer_persis = require('./iceboxpersistence/consumer_persistence.js');
+var consumtion_persis = require('./iceboxpersistence/consumtion_persistence.js');
 
-var persis = require('./iceboxpersistence/drinks_persistence.js');
-
-app.use( bodyParser.json() );       // to support JSON-encoded bodies
+app.use(bodyParser.json());         // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
   extended: true
 }));
 
 /*routing.resources(app, controller_dir, "drinks", {}); // last param optional*/
 
-app.put('/drinks/:id', function(req, res) {
-    console.log("1-put Drink");
-    var drinkId = req.params.id;
+app.post('/consumer', function(req, res) {
+  console.log("post-consumer");
 
-    var fullprice = req.body.fullprice;
-    var discountprice = req.body.discountprice;
-    var quantity = req.body.quantity;
+  var username = req.body.username;
+  var contactmail = req.body.contactmail;
 
-    persis.updateDrink(fullprice, discountprice, drinkId, quantity);
-
+  consumer_persis.insertNewConsumer(username, contactmail, function(username, contactmail, randomstring){
+    //TODO: send mail to user with his secret string to be used in applications...
+    console.log(randomstring);
     res.end();
+  });
+});
+
+app.get('/consumer', function(req, res) {
+  console.log("get-consumer");
+  consumer_persis.getAllConsumers(function(results){
+      return res.json(results);
+  });
+});
+
+
+app.get('/consumer/:username', function(req, res) {
+  console.log("get-consumer");
+
+  var username = req.params.username;
+  consumer_persis.getConsumersByName(username, function(results){
+      return res.json(results);
+  });
+});
+
+//TODO: meh, kann man das irgendwie in einem get mit ein oder zwei params je nachdem oder so...
+app.get('/consumerWithSecret/:username/:randomsring', function(req, res) {
+  console.log("get-consumer2");
+
+  var username = req.params.username;
+  var randomsring = req.params.randomsring;
+  consumer_persis.getConsumersByNameWithSecret(username, randomsring, function(results){
+    return res.json(results);
+  });
+});
+
+//TODO: pay monney to be added to your account
+app.post('/charger', function() {
+  var credit = req.body.credit;
+  var username = req.body.username;
+  //TODO: check that the number is > 0 to acoid trolling
+})
+
+//TODO: pay for a drink
+app.post('/consumtion/:username', function(req, res) {
+
+})
+
+app.post('/consumption', function(req, res) {
+  console.log("consume Drink");
+  var barcode = req.body.barcode;
+  consumtion_persis.consumeDrink(barcode);
+  res.end();
+});
+
+app.put('/drinks/:barcode', function(req, res) {
+  console.log("1-put Drink");
+  var barcode = req.params.barcode;
+
+  var fullprice = req.body.fullprice;
+  var discountprice = req.body.discountprice;
+  var quantity = req.body.quantity;
+
+  drink_persis.updateDrink(fullprice, discountprice, barcode, quantity);
+
+  res.end();
 });
 
 app.delete('/drinks/:id', function(req, res) {
-    console.log("1-delete Drink");
+  console.log("1-delete Drink");
 
-    var drinkId = req.params.id;
+  var drinkId = req.params.id;
 
-    persis.deleteDrinkById(drinkId);
-    res.end();
-
+  drink_persis.deleteDrinkById(drinkId);
+  res.end();
 });
 
-app.get('/drinks/:id', function(req, res) {
+app.get('/drinks/:barcode', function(req, res) {
   console.log("1-get Drink");
-  var drinkId = req.params.id;
-  return persis.getDrinkById(drinkId, function(results){
+  var barcode = req.params.barcode;
+  drink_persis.getDrinkByBarcode(barcode, function(results){
       return res.json(results);
     });
   });
 
 app.get('/drinks', function(req, res) {
   console.log("1-list Drinks");
-  var results = persis.getAllDrinks(function(results){
+  drink_persis.getAllDrinks(function(results){
       return res.json(results);
   });
 });
 
 app.post('/drinks', function(req, res) {
-    console.log("1-createDrink");
-    var name = req.body.productname;
-    var barcode = req.body.barcode;
-    var fullprice = req.body.fullprice;
-    var discountprice = req.body.discountprice;
-    console.log(name);
+  console.log("1-createDrink");
+  var name = req.body.productname;
+  var barcode = req.body.barcode;
+  var fullprice = req.body.fullprice;
+  var discountprice = req.body.discountprice;
+  console.log(name);
 
-    persis.insertNewDrink(name, barcode, fullprice, discountprice);
-    res.end();
+  drink_persis.insertNewDrink(name, barcode, fullprice, discountprice);
+  res.end();
 });
 
 var server = app.listen(8081, function () {
@@ -76,12 +136,17 @@ var server = app.listen(8081, function () {
 function updateTables() {
   updateDepotTables();
   updateDrinkTables();
+  updateConsumerTables();
 }
 
 function updateDepotTables() {
-  persis.setUpDepotTable();
+  depot_persis.setUpDepotTable();
 }
 
 function updateDrinkTables() {
-  persis.setUpDrinksTable();
+  drink_persis.setUpDrinksTable();
+}
+
+function updateConsumerTables(){
+  consumer_persis.setUpConsumerTable();
 }
