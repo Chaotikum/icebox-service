@@ -1,0 +1,30 @@
+{
+  "name": "icebox-service",
+  "version": "0.0.1",
+  "description": "The icebox service. Manage all your beverages.",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Chaotikum/icebox-service.git"
+  },
+  "keywords": [
+    "beverage",
+    "drink",
+    "icebox",
+    "freezer"
+  ],
+  "author": "Chaotikum e.V.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Chaotikum/icebox-service/issues"
+  },
+  "homepage": "https://github.com/Chaotikum/icebox-service#readme",
+  "dependencies": {
+    "body-parser": "^1.14.2",
+    "express": "^4.13.4",
+    "pg": "^4.4.4"
+  }
+}
