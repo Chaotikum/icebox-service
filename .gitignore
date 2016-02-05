@@ -29,6 +29,9 @@ node_modules
 # Otto project
 .otto
 
+# Vagrant
+.vagrant
+
 # Optional npm cache directory
 .npm
 
