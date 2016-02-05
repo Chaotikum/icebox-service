@@ -128,25 +128,6 @@ var server = app.listen(8081, function () {
   var host = server.address().address
   var port = server.address().port
 
-  updateTables();
-
   console.log("IceBox listening at http://%s:%s", host, port)
 })
 
-function updateTables() {
-  updateDepotTables();
-  updateDrinkTables();
-  updateConsumerTables();
-}
-
-function updateDepotTables() {
-  depot_persis.setUpDepotTable();
-}
-
-function updateDrinkTables() {
-  drink_persis.setUpDrinksTable();
-}
-
-function updateConsumerTables(){
-  consumer_persis.setUpConsumerTable();
-}

@@ -26,5 +26,9 @@
     "body-parser": "^1.14.2",
     "express": "^4.13.4",
     "pg": "^4.4.4"
+  },
+  "devDependencies": {
+    "jake": "latest",
+    "nodemon": "^1.8.1"
   }
 }
