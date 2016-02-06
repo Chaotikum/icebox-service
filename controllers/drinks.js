@@ -1,4 +1,4 @@
-var persistence = require('./../iceboxpersistence/drinks_persistence.js');
+var persistence = require('../persistence/drinks.js');
 
 exports.list = function(req, res) {
   console.log("list Drinks");

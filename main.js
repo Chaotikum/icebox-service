@@ -1,12 +1,13 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 
-var consumer_persis = require('./iceboxpersistence/consumers_persistence.js');
-var consumption_persis = require('./iceboxpersistence/consumtion_persistence.js');
-var depot_persis = require('./iceboxpersistence/depot_persistence.js');
+var consumer_persis = require('./persistence/consumers.js');
+var consumption_persis = require('./persistence/consumptions.js');
+var depot_persis = require('./persistence/depots.js');
 
-var drinks = require('./controllers/drinksController.js');
-var consumers = require('./controllers/consumersController.js');
+var drinks = require('./controllers/drinks.js');
+var consumers = require('./controllers/consumers.js');
+var consumptions = require('./controllers/consumptions.js');
 
 var app = express();
 
@@ -40,16 +41,10 @@ app.post('/consumtion/:username', function(req, res) {
 
 })
 
-app.post('/consumption', function(req, res) {
-  console.log("consume Drink");
-  var barcode = req.body.barcode;
-  consumtion_persis.consumeDrink(barcode);
-  res.end();
-});
+app.post('/consumption', consumptions.create);
 
 
 var server = app.listen(8081, function () {
-
   var host = server.address().address
   var port = server.address().port
 

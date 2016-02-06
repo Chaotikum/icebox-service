@@ -35,6 +35,10 @@ exports.insertNewDrink = function(name, barcode, fullprice, discountprice) {
   client.query("INSERT INTO drinks(name, barcode, fullprice, discountprice, quantity) values($1, $2, $3, $4, $5)  ON CONFLICT DO NOTHING", [name, barcode, fullprice, discountprice, 0]);
 };
 
+exports.consumeDrink = function(barcode) {
+  client.query("UPDATE drinks SET quantity=(quantity-1) WHERE barcode=($1)", [barcode]);
+};
+
 exports.setUpDrinksTable = function() {
   client.query('CREATE TABLE IF NOT EXISTS drinks(id SERIAL PRIMARY KEY, name VARCHAR(200) not null UNIQUE, barcode VARCHAR(200) not null UNIQUE, fullprice INTEGER not null, discountprice INTEGER not null, quantity INTEGER not null)');
 };
