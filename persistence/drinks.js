@@ -16,7 +16,7 @@ exports.getDrinkByBarcode = function(barcode, callback) {
     results.push(row);
   });
   query.on('end', function() {
-    callback(results)
+    callback(results);
   });
 };
 
@@ -27,7 +27,7 @@ exports.getAllDrinks = function(callback) {
     results.push(row);
   });
   query.on('end', function() {
-    callback(results)
+    callback(results);
   });
 };
 

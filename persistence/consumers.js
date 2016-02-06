@@ -10,7 +10,7 @@ exports.insertNewConsumer = function(username, contactmail, callback) {
   var randomstring = makeid();
   var query = client.query("INSERT INTO consumer(username, ledger, contactmail, avatarmail, vds, randomstring) values($1, $2, $3, $4, $5, $6)  ON CONFLICT DO NOTHING", [username, 0, contactmail, "", true, randomstring]);
   query.on('end', function() {
-      callback(username, contactmail, randomstring)
+      callback(username, contactmail, randomstring);
       client.end();
       return;
   });
@@ -23,7 +23,7 @@ exports.getAllConsumers = function(callback) {
     results.push(row);
   });
   query.on('end', function() {
-    callback(results)
+    callback(results);
   });
 };
 
@@ -34,9 +34,9 @@ exports.getConsumersByName = function(username, callback) {
     results.push(row);
   });
   query.on('end', function() {
-    callback(results)
+    callback(results);
   });
-}
+};
 
 exports.getConsumersByNameWithSecret = function(username, randomstring, callback) {
   var results = [];
@@ -45,9 +45,9 @@ exports.getConsumersByNameWithSecret = function(username, randomstring, callback
     results.push(row);
   });
   query.on('end', function() {
-    callback(results)
+    callback(results);
   });
-}
+};
 
 function makeid()
 {

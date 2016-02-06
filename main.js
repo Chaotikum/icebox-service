@@ -34,20 +34,20 @@ app.post('/charger', function() {
   var credit = req.body.credit;
   var username = req.body.username;
   //TODO: check that the number is > 0 to acoid trolling
-})
+});
 
 //TODO: pay for a drink
 app.post('/consumtion/:username', function(req, res) {
 
-})
+});
 
 app.post('/consumption', consumptions.create);
 
 
 var server = app.listen(8081, function () {
-  var host = server.address().address
-  var port = server.address().port
+  var host = server.address().address;
+  var port = server.address().port;
 
-  console.log("IceBox listening at http://%s:%s", host, port)
-})
+  console.log("IceBox listening at http://%s:%s", host, port);
+});
 
