@@ -1,10 +1,6 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 
-var consumer_persis = require('./persistence/consumers.js');
-var consumption_persis = require('./persistence/consumptions.js');
-var depot_persis = require('./persistence/depots.js');
-
 var drinks = require('./controllers/drinks.js');
 var consumers = require('./controllers/consumers.js');
 var consumptions = require('./controllers/consumptions.js');
@@ -23,24 +19,17 @@ app.get('/drinks/:barcode', drinks.show);
 app.put('/drinks/:barcode', drinks.update);
 app.delete('/drinks/:barcode', drinks.destroy);
 
-app.get('/consumer', consumers.list);
-app.post('/consumer', consumers.create);
-app.get('/consumer/:username', consumers.show);
-//TODO: meh, kann man das irgendwie in einem get mit ein oder zwei params je nachdem oder so...
-app.get('/consumerWithSecret/:username/:randomsring', consumers.showSecret);
+// TODO: pay monney to be added to your account
+app.post('/charger', consumers.charge);
 
-//TODO: pay monney to be added to your account
-app.post('/charger', function() {
-  var credit = req.body.credit;
-  var username = req.body.username;
-  //TODO: check that the number is > 0 to acoid trolling
-});
+app.get('/consumers', consumers.list);
+app.post('/consumers', consumers.create);
+app.get('/consumers/:username', consumers.show);
+// TODO: meh, kann man das irgendwie in einem get mit ein oder zwei params je nachdem oder so...
+app.get('/consumers/:username/withSecret/:randomsring', consumers.showSecret);
 
-//TODO: pay for a drink
-app.post('/consumtion/:username', function(req, res) {
-
-});
-
+// TODO: pay for a drink
+app.post('/consumption/:username', consumptions.createWithConsumer);
 app.post('/consumption', consumptions.create);
 
 

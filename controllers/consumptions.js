@@ -7,3 +7,14 @@ exports.create = function(req, res) {
   persistence.consumeDrink(barcode);
   res.end();
 };
+
+
+exports.createWithConsumer = function(req, res) {
+  console.log("create Consumption with Consumer");
+
+  var barcode = req.body.barcode;
+  persistence.consumeDrink(barcode);
+
+  res.end();
+
+};

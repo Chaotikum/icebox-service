@@ -40,3 +40,8 @@ exports.showSecret = function(req, res) {
   });
 };
 
+exports.charge = function(req, res) {
+  var credit = req.body.credit;
+  var username = req.body.username;
+  // TODO: check that the number is > 0 to acoid trolling
+};
