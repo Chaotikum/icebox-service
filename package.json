@@ -2,8 +2,9 @@
   "name": "icebox-service",
   "version": "0.0.1",
   "description": "The icebox service. Manage all your beverages.",
-  "main": "main.js",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
