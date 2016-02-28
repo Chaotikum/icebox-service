@@ -17,26 +17,30 @@ namespace('db', function() {
       }
     });
 
-    client.query('CREATE TABLE IF NOT EXISTS depot(' +
+    client.query('CREATE TABLE IF NOT EXISTS depot (' +
       'id SERIAL PRIMARY KEY, ' +
       'name VARCHAR(200) not null)');
 
-    client.query('CREATE TABLE IF NOT EXISTS drinks(' +
+    client.query('CREATE TABLE IF NOT EXISTS drinks (' +
       'id SERIAL PRIMARY KEY, ' +
       'name VARCHAR(200) not null UNIQUE, ' +
       'barcode VARCHAR(200) not null UNIQUE, ' +
-      'fullprice INTEGER not null, ' +
-      'discountprice INTEGER not null, ' +
+      'fullprice INTEGER not null CONSTRAINT positive_fullprice CHECK (fullprice > 0), ' +
+      'discountprice INTEGER not null CONSTRAINT positive_disocuntprice CHECK (discountprice > 0 AND fullprice >= discountprice), ' +
       'quantity INTEGER not null)');
 
-    client.query('CREATE TABLE IF NOT EXISTS consumer(' +
+    client.query('CREATE TABLE IF NOT EXISTS consumer (' +
       'id SERIAL PRIMARY KEY, ' +
       'username VARCHAR(200) not null UNIQUE, ' +
       'ledger INTEGER not null, ' +
-      'contactmail VARCHAR(254) not null, ' +
       'avatarmail VARCHAR(254), ' +
-      'vds BOOLEAN, ' +  
-      'randomstring VARCHAR(20) not null)');
+      'vds BOOLEAN)');
+
+    client.query('CREATE TABLE IF NOT EXISTS consumtion (' +
+      'id SERIAL PRIMARY KEY, ' +
+      'consumetime TIMESTAMP DEFAULT current_timestamp, ' +
+      'consumer_id SERIAL REFERENCES consumer (id), ' +
+      'drink_id SERIAL REFERENCES drinks (id))');
 
     client.on('drain', client.end.bind(client));
   });
@@ -51,9 +55,11 @@ namespace('db', function() {
       }
     });
 
+    client.query('DROP TABLE consumtion')
     client.query('DROP TABLE depot')
     client.query('DROP TABLE drinks')
     client.query('DROP TABLE consumer')
+
 
     client.on('drain', client.end.bind(client));
   });
@@ -75,4 +81,3 @@ namespace('db', function() {
 //  });
 //
 });
-

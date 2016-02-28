@@ -9,8 +9,8 @@ var consumptions = require('./controllers/consumptions.js');
 
 var app = express();
 
-app.use(bodyParser.json());         // to support JSON-encoded bodies
-app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
+app.use(bodyParser.json()); // to support JSON-encoded bodies
+app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
   extended: true
 }));
 
@@ -21,24 +21,21 @@ app.get('/drinks/:barcode', drinks.show);
 app.put('/drinks/:barcode', drinks.update);
 app.delete('/drinks/:barcode', drinks.destroy);
 
-// TODO: pay monney to be added to your account
-app.post('/charger', consumers.charge);
-
 app.get('/consumers', consumers.list);
 app.post('/consumers', consumers.create);
 app.get('/consumers/:username', consumers.show);
-// TODO: meh, kann man das irgendwie in einem get mit ein oder zwei params je nachdem oder so...
-app.get('/consumers/:username/withSecret/:randomsring', consumers.showSecret);
+app.post('/consumers/:username/deposit', consumers.addDeposit);
+app.delete('/consumers/:username', consumers.destroy);
+app.put('/consumers/:username', consumers.manipulate);
 
-// TODO: pay for a drink
+app.get('/consumption', consumptions.getConsumtionRecords);
 app.post('/consumption/:username', consumptions.createWithConsumer);
 app.post('/consumption', consumptions.create);
 
 
-var server = app.listen(8081, function () {
+var server = app.listen(8081, function() {
   var host = server.address().address;
   var port = server.address().port;
 
   console.log("IceBox listening at http://%s:%s", host, port);
 });
-

@@ -2,23 +2,21 @@ var persistence = require('./persistence.js');
 var client = persistence.client;
 
 exports.setUpConsumerTable = function() {
-  //client.query('DROP TABLE consumer')
-  client.query('CREATE TABLE IF NOT EXISTS consumer(id SERIAL PRIMARY KEY, username VARCHAR(200) not null UNIQUE, ledger INTEGER not null, contactmail VARCHAR(254) not null, avatarmail VARCHAR(254), vds BOOLEAN, randomstring VARCHAR(20) not null)');
+  client.query('CREATE TABLE IF NOT EXISTS consumer(id SERIAL PRIMARY KEY, username VARCHAR(200) not null UNIQUE, ledger INTEGER not null VARCHAR(254) not null, avatarmail VARCHAR(254), vds BOOLEAN, randomstring VARCHAR(20) not null)');
 };
 
-exports.insertNewConsumer = function(username, contactmail, callback) {
-  var randomstring = makeid();
-  var query = client.query("INSERT INTO consumer(username, ledger, contactmail, avatarmail, vds, randomstring) values($1, $2, $3, $4, $5, $6)  ON CONFLICT DO NOTHING", [username, 0, contactmail, "", true, randomstring]);
+exports.insertNewConsumer = function(username, callback) {
+  var query = client.query("INSERT INTO consumer(username, ledger, avatarmail, vds) values($1, $2, $3, $4)  ON CONFLICT DO NOTHING", [username, 0, "", true]);
   query.on('end', function() {
-      callback(username, contactmail, randomstring);
-      client.end();
-      return;
+    callback(username);
+    client.end();
+    return;
   });
 };
 
 exports.getAllConsumers = function(callback) {
   var results = [];
-  var query = client.query("SELECT username, avatarmail, ledger, randomstring FROM consumer ORDER BY username ASC");
+  var query = client.query("SELECT username, avatarmail, ledger, vds FROM consumer ORDER BY username ASC");
   query.on('row', function(row) {
     results.push(row);
   });
@@ -28,34 +26,30 @@ exports.getAllConsumers = function(callback) {
 };
 
 exports.getConsumersByName = function(username, callback) {
-  var results = [];
-  var query = client.query("SELECT username, avatarmail, ledger, randomstring FROM consumer WHERE username=($1) ORDER BY username ASC", [username]);
+  var query = client.query("SELECT username, avatarmail, ledger, vds FROM consumer WHERE username = ($1) ORDER BY username ASC", [username]);
   query.on('row', function(row) {
-    results.push(row);
-  });
-  query.on('end', function() {
-    callback(results);
+    callback(row);
   });
 };
 
-exports.getConsumersByNameWithSecret = function(username, randomstring, callback) {
-  var results = [];
-  var query = client.query("SELECT username, contactmail, avatarmail, ledger, vds FROM consumer WHERE username=($1) AND randomstring=($2) ORDER BY username ASC", [username, randomstring]);
-  query.on('row', function(row) {
-    results.push(row);
-  });
+exports.deleteConsumerByName = function(username, callback) {
+  var query = client.query("DELETE FROM consumer WHERE username = ($1)", [username]);
   query.on('end', function() {
-    callback(results);
+    callback();
   });
 };
 
-function makeid()
-{
-    var text = "";
-    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+exports.manipulateConsumer = function(username, avatarmail, vds, callback) {
+    var query = client.query("UPDATE consumer SET avatarmail = ($1), vds = ($2) WHERE username = ($3)", [avatarmail, vds, username]);
+    query.on('end', function() {
+      exports.getConsumersByName(username, callback);
+    });
+};
 
-    for( var i=0; i < 20; i++ )
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-    return text;
-}
+exports.addDeposit = function(username, amount, callback) {
+  var result = [];
+  var query = client.query("UPDATE consumer SET ledger = ledger + ($2) WHERE username = ($1)", [username, amount]);
+  query.on('end', function() {
+    exports.getConsumersByName(username, callback);
+  });
+};
