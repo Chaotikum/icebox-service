@@ -14,7 +14,7 @@ exports.create = function(req, res) {
   console.log("create Consumption");
 
   var barcode = req.body.barcode;
-  persistence.consumeDrink(barcode function(drink) {
+  persistence.consumeDrink(barcode, function(drink) {
     recordConsumtion(drink);
   });
   res.end();
