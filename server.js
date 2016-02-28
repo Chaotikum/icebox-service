@@ -2,6 +2,7 @@
 
 var express = require('express');
 var bodyParser = require('body-parser');
+var bonjour = require('bonjour')();
 
 var drinks = require('./controllers/drinks.js');
 var consumers = require('./controllers/consumers.js');
@@ -13,6 +14,8 @@ app.use(bodyParser.json()); // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
   extended: true
 }));
+
+//TODO: es sollte eine beschreibung des services unter '/' geben. Als HTML, sozusagen die Doku.
 
 // Map routes to controller functions
 app.get('/drinks', drinks.list);
@@ -39,4 +42,11 @@ var server = app.listen(8081, function() {
   var port = server.address().port;
 
   console.log("IceBox listening at http://%s:%s", host, port);
+
+  bonjour.publish({
+    name: 'IceBox',
+    type: 'http',
+    port: port
+  })
+  
 });

@@ -26,7 +26,8 @@
   "dependencies": {
     "body-parser": "^1.14.2",
     "express": "^4.13.4",
-    "pg": "^4.4.4"
+    "pg": "^4.4.4",
+    "bonjour": "^3.2.0"
   },
   "devDependencies": {
     "jake": "latest",
