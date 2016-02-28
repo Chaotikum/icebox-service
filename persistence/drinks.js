@@ -27,8 +27,11 @@ exports.getAllDrinks = function(callback) {
   });
 };
 
-exports.insertNewDrink = function(name, barcode, fullprice, discountprice) {
-  client.query("INSERT INTO drinks(name, barcode, fullprice, discountprice, quantity) values($1, $2, $3, $4, $5)  ON CONFLICT DO NOTHING", [name, barcode, fullprice, discountprice, 0]);
+exports.insertNewDrink = function(name, barcode, fullprice, discountprice, callback) {
+  var query = client.query("INSERT INTO drinks(name, barcode, fullprice, discountprice, quantity) values($1, $2, $3, $4, $5)  ON CONFLICT DO NOTHING", [name, barcode, fullprice, discountprice, 0]);
+  query.on('end', function() {
+    exports.getDrinkByBarcode(barcode, callback);
+  });
 };
 
 exports.consumeDrink = function(barcode, callback) {

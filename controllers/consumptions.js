@@ -27,8 +27,13 @@ exports.createWithConsumer = function(req, res) {
   var username = req.params.username;
   var barcode = req.body.barcode;
 
+  console.log("1");
+
   persistence.getDrinkByBarcode(barcode, function(drink) {
+    //TODO: how do wen know if the user pays discount or regular?
+    // This only works if there is a smallest value (500) in addDeposit
     var price = drink.discountprice;
+    console.log(drink.name+" "+price);
     consumerPersistence.getConsumersByName(username, function(consumer) {
       if(consumer.ledger < price) {
         res.status(402);
@@ -45,7 +50,7 @@ function consumeDrink(res, consumer, drink) {
   persistence.consumeDrink(drink.barcode, function(drink) {
     consumerPersistence.addDeposit(consumer.username, drink.discountprice * (-1), function(updatedConsumer) {
       if(consumer.vds) {
-        recordConsumtionForUser(consumer, drink);
+        recordConsumtionForUser(updatedConsumer, drink);
       }
       recordConsumtion(drink);
       res.json(updatedConsumer);
@@ -54,7 +59,7 @@ function consumeDrink(res, consumer, drink) {
 }
 
 function recordConsumtionForUser(consumer, drink) {
-  consumtionpersistence.recordConsumtion(consumer.id, drink.id);
+  consumtionpersistence.recordConsumtion(consumer.username, drink.barcode);
 }
 
 

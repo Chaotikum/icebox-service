@@ -16,9 +16,9 @@ exports.create = function(req, res) {
   var fullprice = req.body.fullprice;
   var discountprice = req.body.discountprice;
 
-  persistence.insertNewDrink(name, barcode, fullprice, discountprice);
-
-  res.end();
+  persistence.insertNewDrink(name, barcode, fullprice, discountprice, function(drink) {
+      res.json(drink);
+  });
 };
 
 exports.show = function(req, res) {
@@ -54,4 +54,3 @@ exports.destroy = function(req, res) {
 
   res.end();
 };
-
