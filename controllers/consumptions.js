@@ -1,12 +1,12 @@
 var persistence = require('../persistence/drinks.js');
 var consumerPersistence = require('../persistence/consumers.js');
-var consumtionpersistence = require('../persistence/consumtion.js');
+var consumptionpersistence = require('../persistence/consumption.js');
 
 
-exports.getConsumtionRecords = function(req, res) {
-  console.log("get Consumtion Record");
-  consumtionpersistence.getAllConsumtionRecords(function(consumtionRecords) {
-    res.json(consumtionRecords);
+exports.getConsumptionRecords = function(req, res) {
+  console.log("get Consumption Record");
+  consumptionpersistence.getAllConsumptionRecords(function(consumptionRecords) {
+    res.json(consumptionRecords);
   });
 }
 
@@ -15,7 +15,7 @@ exports.create = function(req, res) {
 
   var barcode = req.body.barcode;
   persistence.consumeDrink(barcode, function(drink) {
-    recordConsumtion(drink);
+    recordConsumption(drink);
   });
   res.end();
 };
@@ -50,19 +50,19 @@ function consumeDrink(res, consumer, drink) {
   persistence.consumeDrink(drink.barcode, function(drink) {
     consumerPersistence.addDeposit(consumer.username, drink.discountprice * (-1), function(updatedConsumer) {
       if(consumer.vds) {
-        recordConsumtionForUser(updatedConsumer, drink);
+        recordConsumptionForUser(updatedConsumer, drink);
       }
-      recordConsumtion(drink);
+      recordConsumption(drink);
       res.json(updatedConsumer);
     })
   });
 }
 
-function recordConsumtionForUser(consumer, drink) {
-  consumtionpersistence.recordConsumtion(consumer.username, drink.barcode);
+function recordConsumptionForUser(consumer, drink) {
+  consumptionpersistence.recordConsumption(consumer.username, drink.barcode);
 }
 
 
-function recordConsumtion(drink) {
+function recordConsumption(drink) {
 //TODO: Anonymous record of a drink being consumed
 }

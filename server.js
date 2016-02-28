@@ -28,7 +28,7 @@ app.post('/consumers/:username/deposit', consumers.addDeposit);
 app.delete('/consumers/:username', consumers.destroy);
 app.put('/consumers/:username', consumers.manipulate);
 
-app.get('/consumption', consumptions.getConsumtionRecords);
+app.get('/consumption', consumptions.getConsumptionRecords);
 app.post('/consumption/:username', consumptions.createWithConsumer);
 app.post('/consumption', consumptions.create);
 

@@ -36,7 +36,7 @@ namespace('db', function() {
       'avatarmail VARCHAR(254), ' +
       'vds BOOLEAN)');
 
-    client.query('CREATE TABLE IF NOT EXISTS consumtion (' +
+    client.query('CREATE TABLE IF NOT EXISTS consumption (' +
       'id SERIAL PRIMARY KEY, ' +
       'consumetime TIMESTAMP DEFAULT current_timestamp, ' +
       'consumer_id SERIAL REFERENCES consumer (id), ' +
@@ -55,7 +55,7 @@ namespace('db', function() {
       }
     });
 
-    client.query('DROP TABLE consumtion')
+    client.query('DROP TABLE consumption')
     client.query('DROP TABLE depot')
     client.query('DROP TABLE drinks')
     client.query('DROP TABLE consumer')
