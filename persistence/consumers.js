@@ -6,7 +6,7 @@ exports.setUpConsumerTable = function() {
 };
 
 exports.insertNewConsumer = function(username, callback) {
-  var query = client.query("INSERT INTO consumer(username, ledger, avatarmail, vds) values($1, $2, $3, $4)  ON CONFLICT DO NOTHING", [username, 0, "", true]);
+  var query = client.query("INSERT INTO consumer(username, ledger, avatarmail, vds) values($1, $2, $3, $4)  ON CONFLICT DO NOTHING", [username, 0, "", false]);
   query.on('end', function() {
     callback(username);
     client.end();
