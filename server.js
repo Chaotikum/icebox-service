@@ -24,6 +24,7 @@ app.delete('/drinks/:barcode', drinks.destroy);
 app.get('/consumers', consumers.list);
 app.post('/consumers', consumers.create);
 app.get('/consumers/:username', consumers.show);
+app.get('/consumers/:username/history', consumers.showHistory);
 app.post('/consumers/:username/deposit', consumers.addDeposit);
 app.delete('/consumers/:username', consumers.destroy);
 app.put('/consumers/:username', consumers.manipulate);

@@ -66,3 +66,7 @@ function recordConsumptionForUser(consumer, drink) {
 function recordConsumption(drink) {
 //TODO: Anonymous record of a drink being consumed
 }
+
+exports.getConsumptionRecordsForUser = function (username, callback) {
+  consumptionpersistence.getConsumptionRecordsForUser(username, callback)
+}

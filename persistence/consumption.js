@@ -31,3 +31,20 @@ exports.getAllConsumptionRecords = function(callback) {
     callback(results);
   });
 };
+
+exports.getConsumptionRecordsForUser = function(username, callback) {
+  var results = [];
+
+  var query = client.query("SELECT consumption.consumetime, consumer.username, drinks.barcode, drinks.name " +
+    "FROM consumption LEFT OUTER JOIN consumer ON (consumption.consumer_id = consumer.id) " +
+    "LEFT OUTER JOIN drinks ON (consumption.drink_id = drinks.id) "+
+    "WHERE consumer.username = ($1) " +
+    "ORDER BY consumption.consumetime DESC", [username]);
+
+  query.on('row', function(row) {
+    results.push(row);
+  });
+  query.on('end', function() {
+    callback(results);
+  });
+}

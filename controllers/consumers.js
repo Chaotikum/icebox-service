@@ -1,4 +1,5 @@
 var persistence = require('../persistence/consumers.js');
+var consumptions = require('./consumptions.js');
 
 exports.list = function(req, res) {
   console.log("list Consumers");
@@ -26,6 +27,17 @@ exports.show = function(req, res) {
     res.json(consumer);
   });
 };
+
+exports.showHistory = function(req, res) {
+  console.log("show Consumer With History");
+
+  var username = req.params.username;
+  persistence.getConsumersByName(username, function(consumer) {
+    consumptions.getConsumptionRecordsForUser(username, function(consumptions) {
+
+    });
+  });
+}
 
 exports.destroy = function(req, res) {
   console.log("Delete Consumer");
