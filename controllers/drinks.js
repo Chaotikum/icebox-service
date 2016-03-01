@@ -15,8 +15,10 @@ exports.create = function(req, res) {
   var barcode = req.body.barcode;
   var fullprice = req.body.fullprice;
   var discountprice = req.body.discountprice;
+  var quantity = req.body.quantity;
+  var empties = req.body.empties;
 
-  persistence.insertNewDrink(name, barcode, fullprice, discountprice, function(drink) {
+  persistence.insertNewDrink(name, barcode, fullprice, discountprice, quantity, empties, function(drink) {
       res.json(drink);
   });
 };
@@ -37,8 +39,9 @@ exports.update = function(req, res) {
   var fullprice = req.body.fullprice;
   var discountprice = req.body.discountprice;
   var quantity = req.body.quantity;
+  var empties = req.body.empties;
 
-  persistence.updateDrink(fullprice, discountprice, barcode, quantity);
+  persistence.updateDrink(fullprice, discountprice, barcode, quantity, empties);
 
   res.end();
 };

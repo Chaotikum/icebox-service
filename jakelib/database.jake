@@ -23,7 +23,8 @@ namespace('db', function() {
       'barcode VARCHAR(200) not null UNIQUE, ' +
       'fullprice INTEGER not null CONSTRAINT positive_fullprice CHECK (fullprice > 0), ' +
       'discountprice INTEGER not null CONSTRAINT positive_disocuntprice CHECK (discountprice > 0 AND fullprice >= discountprice), ' +
-      'quantity INTEGER not null CONSTRAINT positive_quantity CHECK (quantity >= 0))');
+      'quantity INTEGER not null CONSTRAINT positive_quantity CHECK (quantity >= 0), ' +
+      'empties INTEGER not null CONTRAINT positive_empties CHECK (quantity >= 0)')');
 
     client.query('CREATE TABLE IF NOT EXISTS consumer (' +
       'id SERIAL PRIMARY KEY, ' +
@@ -38,7 +39,7 @@ namespace('db', function() {
       'consumer_id SERIAL REFERENCES consumer (id), ' +
       'drink_id SERIAL REFERENCES drinks (id))');
 
-    client.query('INSERT INTO consumer (username, ledger, vds) VALUES (\'Anon\', 0, true)');    
+    client.query('INSERT INTO consumer (username, ledger, vds) VALUES (\'Anon\', 0, true)');
 
     client.on('drain', client.end.bind(client));
   });

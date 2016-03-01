@@ -1,8 +1,8 @@
 var persistence = require('./persistence.js');
 var client = persistence.client;
 
-exports.updateDrink = function(fullprice, discountprice, barcode, quantity) {
-  client.query("UPDATE drinks SET fullprice=($1), discountprice=($2), quantity=($4) WHERE barcode=($3)", [fullprice, discountprice, barcode, quantity]);
+exports.updateDrink = function(fullprice, discountprice, barcode, quantity, empties) {
+  client.query("UPDATE drinks SET fullprice=($1), discountprice=($2), quantity=($4), empties=($5) WHERE barcode=($3)", [fullprice, discountprice, barcode, quantity, empties]);
 };
 
 exports.deleteDrinkById = function(drinkId) {
@@ -27,17 +27,20 @@ exports.getAllDrinks = function(callback) {
   });
 };
 
-exports.insertNewDrink = function(name, barcode, fullprice, discountprice, callback) {
-  var query = client.query("INSERT INTO drinks(name, barcode, fullprice, discountprice, quantity) values($1, $2, $3, $4, $5)  ON CONFLICT DO NOTHING", [name, barcode, fullprice, discountprice, 0]);
+exports.insertNewDrink = function(name, barcode, fullprice, discountprice, quantity, empties, callback) {
+  var query = client.query("INSERT INTO drinks(name, barcode, fullprice, discountprice, quantity, empties) values($1, $2, $3, $4, $5, $6)  ON CONFLICT DO NOTHING", [name, barcode, fullprice, discountprice, quantity, empties]);
   query.on('end', function() {
     exports.getDrinkByBarcode(barcode, callback);
   });
 };
 
 exports.consumeDrink = function(barcode, callback) {
-  var query = client.query("UPDATE drinks SET quantity=(quantity-1) WHERE barcode=($1)", [barcode]);
-  query.on('end', function() {
-    exports.getDrinkByBarcode(barcode, callback);
+  var query1 = client.query("UPDATE drinks SET quantity=(quantity-1) WHERE barcode=($1)", [barcode]);
+  query1.on('end', function() {
+    var query2 = client.query("UPDATE drinks SET empties=(empties+1) WHERE barcode=($1)", [barcode]);
+    query2.on('end', function() {
+      exports.getDrinkByBarcode(barcode, callback);
+    });
   })
 };
 
