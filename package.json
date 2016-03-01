@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "nodemon server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test.js"
   },
   "repository": {
     "type": "git",
@@ -32,6 +32,10 @@
   "devDependencies": {
     "jake": "latest",
     "jshint": "^2.9.1",
-    "nodemon": "^1.8.1"
+    "require": "latest",
+    "mocha": "^2.4.5",
+    "nodemon": "^1.8.1",
+    "should": "^8.2.2",
+    "supertest": "^1.2.0"
   }
 }

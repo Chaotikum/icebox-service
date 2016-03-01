@@ -12,6 +12,7 @@ exports.list = function(req, res) {
 exports.create = function(req, res) {
   console.log("created Consumer");
 
+  console.log(res.body);
   var username = req.body.username;
 
   persistence.insertNewConsumer(username, function(consumer) {
@@ -24,6 +25,7 @@ exports.show = function(req, res) {
 
   var username = req.params.username;
   persistence.getConsumersByName(username, function(consumer) {
+    res.status(200);
     res.json(consumer);
   });
 };

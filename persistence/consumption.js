@@ -2,18 +2,25 @@ var persistence = require('./persistence.js');
 var client = persistence.client;
 
 exports.recordConsumption = function(username, barcode) {
-  var query1 = client.query("SELECT * FROM consumer WHERE username = ($1)", [username]);
-  query1.on('row', function(consumer) {
     var query2 = client.query("SELECT * FROM drinks WHERE barcode = ($1)", [barcode]);
     query2.on('row', function(drink) {
-      recordConsumptionWithIds(consumer.id, drink.id);
-    });
+      if(username == null) {
+        recordAnonymousConsumption(drink.id);
+      } else {
+        var query1 = client.query("SELECT * FROM consumer WHERE username = ($1)", [username]);
+        query1.on('row', function(consumer) {
+          recordConsumptionWithIds(consumer.id, drink.id);
+        });
+      }
   });
 };
 
 function recordConsumptionWithIds(consumer_id, drink_id) {
-  console.log(consumer_id+" "+drink_id);
-  var query = client.query("INSERT INTO consumption (consumetime, consumer_id, drink_id) values(CURRENT_TIMESTAMP, $1, $2)", [consumer_id, drink_id]);
+  var query = client.query("INSERT INTO consumption (consumetime, consumer_id, drink_id) values (CURRENT_TIMESTAMP, $1, $2)", [consumer_id, drink_id]);
+}
+
+function recordAnonymousConsumption(drink_id) {
+
 }
 
 exports.getAllConsumptionRecords = function(callback) {

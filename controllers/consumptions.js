@@ -14,10 +14,18 @@ exports.create = function(req, res) {
   console.log("create Consumption");
 
   var barcode = req.body.barcode;
-  persistence.consumeDrink(barcode, function(drink) {
-    recordConsumption(drink);
+  persistence.getDrinkByBarcode(barcode, function(drink) {
+    if(drink.quantity == 0) {
+      res.status(412);
+      res.json({
+        message: 'According to records this drink is not avaliable.'
+      });
+    }
+    persistence.consumeDrink(barcode, function(drink) {
+      recordConsumption(drink, "Anon");
+      res.json(drink);
+    });
   });
-  res.end();
 };
 
 
@@ -41,6 +49,12 @@ exports.createWithConsumer = function(req, res) {
           message: 'Insfficient Funds'
         });
       }
+      if(drink.quantity == 0) {
+        res.status(412);
+        res.json({
+          message: 'According to records this drink is not avaliable.'
+        });
+      }
       consumeDrink(res, consumer, drink);
     });
   });
@@ -51,8 +65,11 @@ function consumeDrink(res, consumer, drink) {
     consumerPersistence.addDeposit(consumer.username, drink.discountprice * (-1), function(updatedConsumer) {
       if(consumer.vds) {
         recordConsumptionForUser(updatedConsumer, drink);
+      } else {
+        recordConsumption(drink, "Anon");
       }
-      recordConsumption(drink);
+      //TODO: wenn wir ein notification system bauen würde man das wohl hier einhängen...
+
       res.json(updatedConsumer);
     })
   });
@@ -60,11 +77,6 @@ function consumeDrink(res, consumer, drink) {
 
 function recordConsumptionForUser(consumer, drink) {
   consumptionpersistence.recordConsumption(consumer.username, drink.barcode);
-}
-
-
-function recordConsumption(drink) {
-//TODO: Anonymous record of a drink being consumed
 }
 
 exports.getConsumptionRecordsForUser = function (username, callback) {
