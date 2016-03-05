@@ -27,7 +27,9 @@
     "body-parser": "^1.14.2",
     "express": "^4.13.4",
     "pg": "^4.4.4",
-    "bonjour": "^3.2.0"
+    "bonjour": "^3.2.0",
+    "cors": "2.7.1",
+    "ip": "1.1.1"
   },
   "devDependencies": {
     "jake": "latest",
