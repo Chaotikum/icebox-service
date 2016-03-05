@@ -3,7 +3,7 @@ var persistence = require('../persistence/drinks.js');
 exports.list = function(req, res) {
   console.log("list Drinks");
 
-  persistence.getAllDrinks(function(drinks){
+  persistence.getAllDrinksByPopularity(function(drinks){
     res.json(drinks);
   });
 };

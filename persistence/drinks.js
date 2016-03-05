@@ -10,7 +10,7 @@ exports.deleteDrinkById = function(drinkId) {
 };
 
 exports.getDrinkByBarcode = function(barcode, callback) {
-  var query = client.query("SELECT name, barcode, fullprice, discountprice, quantity FROM drinks WHERE barcode=($1) ORDER BY id ASC", [barcode]);
+  var query = client.query("SELECT name, barcode, fullprice, discountprice, quantity, empties FROM drinks WHERE barcode=($1) ORDER BY id ASC", [barcode]);
   query.on('row', function(row) {
     callback(row);
   });
@@ -18,7 +18,21 @@ exports.getDrinkByBarcode = function(barcode, callback) {
 
 exports.getAllDrinks = function(callback) {
   var results = [];
-  var query = client.query("SELECT name, barcode, fullprice, discountprice, quantity FROM drinks ORDER BY name ASC");
+  var query = client.query("SELECT name, barcode, fullprice, discountprice, quantity, empties FROM drinks ORDER BY name ASC");
+  query.on('row', function(row) {
+    results.push(row);
+  });
+  query.on('end', function() {
+    callback(results);
+  });
+};
+
+exports.getAllDrinksByPopularity = function(callback) {
+  var results = [];
+  var query = client.query("SELECT name, barcode, fullprice, discountprice, quantity, empties " +
+  "FROM drinks d LEFT OUTER JOIN consumption c ON d.id = c.drink_id " +
+  "GROUP BY d.id "+
+  "ORDER BY COUNT(c.drink_id) DESC");
   query.on('row', function(row) {
     results.push(row);
   });

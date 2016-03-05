@@ -4,7 +4,7 @@ var consumptions = require('./consumptions.js');
 exports.list = function(req, res) {
   console.log("list Consumers");
 
-  persistence.getAllConsumers(function(consumers) {
+  persistence.getAllConsumersSortedByConsumption(function(consumers) {
     res.json(consumers);
   });
 };

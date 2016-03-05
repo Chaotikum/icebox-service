@@ -22,7 +22,7 @@ exports.create = function(req, res) {
       });
     }
     persistence.consumeDrink(barcode, function(drink) {
-      recordConsumption(drink, "Anon");
+      recordConsumptionForUser(drink, "Anon");
       res.json(drink);
     });
   });
@@ -43,30 +43,37 @@ exports.createWithConsumer = function(req, res) {
     var price = drink.discountprice;
     console.log(drink.name+" "+price);
     consumerPersistence.getConsumersByName(username, function(consumer) {
+      console.log(consumer.ledger);
       if(consumer.ledger < price) {
         res.status(402);
         res.json({
           message: 'Insfficient Funds'
         });
+      } else {
+        if(drink.quantity == 0) {
+          res.status(412);
+          res.json({
+            message: 'According to records this drink is not avaliable.'
+          });
+        } else {
+          consumeDrink(res, consumer, drink);
+        }
       }
-      if(drink.quantity == 0) {
-        res.status(412);
-        res.json({
-          message: 'According to records this drink is not avaliable.'
-        });
-      }
-      consumeDrink(res, consumer, drink);
     });
   });
 };
 
 function consumeDrink(res, consumer, drink) {
+  console.log("consume drink "+drink.name+" "+consumer.username);
   persistence.consumeDrink(drink.barcode, function(drink) {
+    console.log("1");
     consumerPersistence.addDeposit(consumer.username, drink.discountprice * (-1), function(updatedConsumer) {
+      console.log("2");
       if(consumer.vds) {
         recordConsumptionForUser(updatedConsumer, drink);
       } else {
-        recordConsumption(drink, "Anon");
+        //TODO: Tfis makes no sense and cant happen...
+        recordConsumptionAnonymous(drink);
       }
       //TODO: wenn wir ein notification system bauen würde man das wohl hier einhängen...
 
@@ -76,7 +83,13 @@ function consumeDrink(res, consumer, drink) {
 }
 
 function recordConsumptionForUser(consumer, drink) {
+  console.log("recordConsumptionForUser"+consumer+" "+drink);
   consumptionpersistence.recordConsumption(consumer.username, drink.barcode);
+}
+
+function recordConsumptionAnonymous(drink) {
+  console.log("recordConsumptionAnon"+drink);
+  consumptionpersistence.recordConsumption("Anon", drink.barcode);
 }
 
 exports.getConsumptionRecordsForUser = function (username, callback) {
