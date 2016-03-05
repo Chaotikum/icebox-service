@@ -24,7 +24,7 @@ namespace('db', function() {
       'fullprice INTEGER not null CONSTRAINT positive_fullprice CHECK (fullprice > 0), ' +
       'discountprice INTEGER not null CONSTRAINT positive_disocuntprice CHECK (discountprice > 0 AND fullprice >= discountprice), ' +
       'quantity INTEGER not null CONSTRAINT positive_quantity CHECK (quantity >= 0), ' +
-      'empties INTEGER not null CONTRAINT positive_empties CHECK (quantity >= 0))');
+      'empties INTEGER not null CONSTRAINT positive_empties CHECK (empties >= 0))');
 
     client.query('CREATE TABLE IF NOT EXISTS consumer (' +
       'id SERIAL PRIMARY KEY, ' +
@@ -32,6 +32,12 @@ namespace('db', function() {
       'ledger INTEGER not null CONSTRAINT positive_ledger CHECK (ledger >= 0), ' +
       'avatarmail VARCHAR(254), ' +
       'vds BOOLEAN)');
+
+
+    client.query('CREATE TABLE IF NOT EXISTS alias (' +
+        'id SERIAL PRIMARY KEY, ' +
+        'consumer_id SERIAL REFERENCES consumer (id), ' +
+        'alias VARCHAR(200) not null UNIQUE)');
 
     client.query('CREATE TABLE IF NOT EXISTS consumption (' +
       'id SERIAL PRIMARY KEY, ' +
@@ -58,8 +64,13 @@ namespace('db', function() {
     client.query('INSERT INTO consumer (username, ledger, vds) VALUES (\'test3\', 50000, true)');
     client.query('INSERT INTO consumer (username, ledger, vds) VALUES (\'test4\', 50000, false)');
 
-    client.query('INSERT INTO drinks (name, barcode, fullprice, discountprice, quantity) VALUES (\'Limo1\', \'01010101\', 150, 125, 0)');
-    client.query('INSERT INTO drinks (name, barcode, fullprice, discountprice, quantity) VALUES (\'Limo2\', \'01010110\', 150, 125, 200)');
+    //client.query('INSERT INTO alias (consumer_id, alias) VALUES (3, \'ololroflcopter\')');
+    //client.query('INSERT INTO alias (consumer_id, alias) VALUES (3, \'test4b\')');
+
+    client.query('INSERT INTO drinks (name, barcode, fullprice, discountprice, quantity, empties) VALUES (\'flora power\', \'4260031874056\', 150, 125, 200, 0)');
+    client.query('INSERT INTO drinks (name, barcode, fullprice, discountprice, quantity, empties) VALUES (\'viva con Agua laut\', \'4027109007880\', 150, 125, 200, 0)');
+    client.query('INSERT INTO drinks (name, barcode, fullprice, discountprice, quantity, empties) VALUES (\'Limo1\', \'01010101\', 150, 125, 0, 0)');
+    client.query('INSERT INTO drinks (name, barcode, fullprice, discountprice, quantity, empties) VALUES (\'Limo2\', \'01010110\', 150, 125, 200, 0)');
 
     client.on('drain', client.end.bind(client));
   });
@@ -74,9 +85,10 @@ namespace('db', function() {
       }
     });
 
-    client.query('DROP TABLE consumption')
-    client.query('DROP TABLE drinks')
-    client.query('DROP TABLE consumer')
+    client.query('DROP TABLE IF EXISTS alias');
+    client.query('DROP TABLE IF EXISTS consumption');
+    client.query('DROP TABLE IF EXISTS  drinks');
+    client.query('DROP TABLE IF EXISTS  consumer');
 
 
     client.on('drain', client.end.bind(client));

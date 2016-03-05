@@ -3,10 +3,14 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var bonjour = require('bonjour')();
+var cors = require('cors');
+var path = require('path');
+var ip = require("ip");
 
 var drinks = require('./controllers/drinks.js');
 var consumers = require('./controllers/consumers.js');
 var consumptions = require('./controllers/consumptions.js');
+var dgram = require('dgram');
 
 var app = express();
 
@@ -15,7 +19,17 @@ app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
   extended: true
 }));
 
-//TODO: es sollte eine beschreibung des services unter '/' geben. Als HTML, sozusagen die Doku.
+
+cors({
+  credentials: true,
+  origin: true
+});
+app.use(cors());
+
+//Doku
+app.get('/', function(req, res) {
+  res.sendFile(path.join(__dirname + '/doku/apidoku.html'));
+});
 
 // Map routes to controller functions
 app.get('/drinks', drinks.list);
@@ -36,7 +50,6 @@ app.get('/consumption', consumptions.getConsumptionRecords);
 app.post('/consumption/:username', consumptions.createWithConsumer);
 app.post('/consumption', consumptions.create);
 
-
 var server = app.listen(8081, function() {
   var host = server.address().address;
   var port = server.address().port;
@@ -46,7 +59,9 @@ var server = app.listen(8081, function() {
   bonjour.publish({
     name: 'IceBox',
     type: 'http',
+    host: ip.address(),
     port: port
   })
-  
+
 });
+}
