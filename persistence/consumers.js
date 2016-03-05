@@ -43,6 +43,7 @@ exports.getAllConsumersSortedByConsumption = function(callback) {
 };
 
 exports.getConsumersByName = function(username, callback) {
+  console.log("getConsumersByName "+username);
   var query = client.query("SELECT username, avatarmail, ledger, vds FROM consumer WHERE username = ($1) ORDER BY username ASC", [username]);
   query.on('row', function(row) {
     callback(row);
@@ -50,23 +51,35 @@ exports.getConsumersByName = function(username, callback) {
 };
 
 exports.deleteConsumerByName = function(username, callback) {
+  if(username == "Anon") {
+    exports.getConsumersByName(username, callback);
+  } else {
   var query = client.query("DELETE FROM consumer WHERE username = ($1)", [username]);
   query.on('end', function() {
     callback();
   });
+}
 };
 
 exports.manipulateConsumer = function(username, avatarmail, vds, callback) {
+  if(username == "Anon") {
+    exports.getConsumersByName(username, callback);
+  } else {
   var query = client.query("UPDATE consumer SET avatarmail = ($1), vds = ($2) WHERE username = ($3)", [avatarmail, vds, username]);
   query.on('end', function() {
     exports.getConsumersByName(username, callback);
   });
+  }
 };
 
 exports.addDeposit = function(username, amount, callback) {
   var result = [];
-  var query = client.query("UPDATE consumer SET ledger = ledger + ($2) WHERE username = ($1)", [username, amount]);
-  query.on('end', function() {
+  if(username == "Anon") {
     exports.getConsumersByName(username, callback);
-  });
+  } else {
+    var query = client.query("UPDATE consumer SET ledger = ledger + ($2) WHERE username = ($1)", [username, amount]);
+    query.on('end', function() {
+      exports.getConsumersByName(username, callback);
+    });
+  }
 };

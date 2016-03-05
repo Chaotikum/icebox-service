@@ -10,7 +10,6 @@ var ip = require("ip");
 var drinks = require('./controllers/drinks.js');
 var consumers = require('./controllers/consumers.js');
 var consumptions = require('./controllers/consumptions.js');
-var dgram = require('dgram');
 
 var app = express();
 
@@ -51,15 +50,16 @@ app.post('/consumption/:username', consumptions.createWithConsumer);
 app.post('/consumption', consumptions.create);
 
 var server = app.listen(8081, function() {
+
   var host = server.address().address;
   var port = server.address().port;
-
-  console.log("IceBox listening at http://%s:%s", host, port);
-
+  
   bonjour.publish({
     name: 'IceBox',
     type: 'http',
     host: ip.address(),
     port: port
   })
+
+  console.log("IceBox listening at http://%s:%s", host, port);
 });

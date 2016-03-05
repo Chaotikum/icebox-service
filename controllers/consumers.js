@@ -11,7 +11,7 @@ exports.list = function(req, res) {
 
 exports.create = function(req, res) {
   console.log("created Consumer");
-
+  //TODO: users may not have the same name as a drinks barcode, this would create issues on the client side.
   console.log(res.body);
   var username = req.body.username;
 
@@ -72,11 +72,14 @@ exports.addDeposit = function(req, res) {
   var username = req.params.username;
   var amount = req.body.amount;
 
+  console.log("username "+username);
+  console.log("amount "+amount);
 
-  if (amount < 0) {
+  if (amount < 500) {
+    console.log("<500");
     res.status(422);
     res.json({
-      message: 'Only positive amounts allowed.'
+      message: 'Only positive amounts over 500 allowed.'
     });
   }
 

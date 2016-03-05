@@ -15,7 +15,7 @@ exports.create = function(req, res) {
 
   var barcode = req.body.barcode;
   persistence.getDrinkByBarcode(barcode, function(drink) {
-    if(drink.quantity == 0) {
+    if (drink.quantity == 0) {
       res.status(412);
       res.json({
         message: 'According to records this drink is not avaliable.'
@@ -38,19 +38,20 @@ exports.createWithConsumer = function(req, res) {
   console.log("1");
 
   persistence.getDrinkByBarcode(barcode, function(drink) {
-    //TODO: how do wen know if the user pays discount or regular?
-    // This only works if there is a smallest value (500) in addDeposit
-    var price = drink.discountprice;
-    console.log(drink.name+" "+price);
     consumerPersistence.getConsumersByName(username, function(consumer) {
+      var price = drink.fullprice;
+      if (consumer.ledger > 0) {
+        var price = drink.discountprice;
+      }
+      console.log(drink.name + " " + price);
       console.log(consumer.ledger);
-      if(consumer.ledger < price) {
+      if (consumer.ledger < price && consumer.username != "Anon") {
         res.status(402);
         res.json({
           message: 'Insfficient Funds'
         });
       } else {
-        if(drink.quantity == 0) {
+        if (drink.quantity == 0) {
           res.status(412);
           res.json({
             message: 'According to records this drink is not avaliable.'
@@ -64,12 +65,12 @@ exports.createWithConsumer = function(req, res) {
 };
 
 function consumeDrink(res, consumer, drink) {
-  console.log("consume drink "+drink.name+" "+consumer.username);
+  console.log("consume drink " + drink.name + " " + consumer.username);
   persistence.consumeDrink(drink.barcode, function(drink) {
     console.log("1");
     consumerPersistence.addDeposit(consumer.username, drink.discountprice * (-1), function(updatedConsumer) {
       console.log("2");
-      if(consumer.vds) {
+      if (consumer.vds) {
         recordConsumptionForUser(updatedConsumer, drink);
       } else {
         //TODO: Tfis makes no sense and cant happen...
@@ -83,15 +84,15 @@ function consumeDrink(res, consumer, drink) {
 }
 
 function recordConsumptionForUser(consumer, drink) {
-  console.log("recordConsumptionForUser"+consumer+" "+drink);
+  console.log("recordConsumptionForUser" + consumer + " " + drink);
   consumptionpersistence.recordConsumption(consumer.username, drink.barcode);
 }
 
 function recordConsumptionAnonymous(drink) {
-  console.log("recordConsumptionAnon"+drink);
+  console.log("recordConsumptionAnon" + drink);
   consumptionpersistence.recordConsumption("Anon", drink.barcode);
 }
 
-exports.getConsumptionRecordsForUser = function (username, callback) {
+exports.getConsumptionRecordsForUser = function(username, callback) {
   consumptionpersistence.getConsumptionRecordsForUser(username, callback)
 }
