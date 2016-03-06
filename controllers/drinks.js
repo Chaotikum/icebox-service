@@ -41,7 +41,7 @@ exports.update = function(req, res) {
   var quantity = req.body.quantity;
   var empties = req.body.empties;
 
-  persistence.updateDrink(fullprice, discountprice, barcode, quantity, empties function(drink) {
+  persistence.updateDrink(fullprice, discountprice, barcode, quantity, empties, function(drink) {
 
     broadcast.sendEvent({eventtype: 'drinkupdate', drink: drink.barcode});
 
