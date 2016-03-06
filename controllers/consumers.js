@@ -1,5 +1,6 @@
 var persistence = require('../persistence/consumers.js');
 var consumptions = require('./consumptions.js');
+var broadcast = require('../broadcast/broadcaster.js')
 
 exports.list = function(req, res) {
   console.log("list Consumers");
@@ -16,6 +17,7 @@ exports.create = function(req, res) {
   var username = req.body.username;
 
   persistence.insertNewConsumer(username, function(consumer) {
+    broadcast.sendEvent({eventtype: 'newuser', user: consumer.username});
     res.json(consumer);
   });
 };

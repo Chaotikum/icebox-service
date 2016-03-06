@@ -1,8 +1,11 @@
 var persistence = require('./persistence.js');
 var client = persistence.client;
 
-exports.updateDrink = function(fullprice, discountprice, barcode, quantity, empties) {
-  client.query("UPDATE drinks SET fullprice=($1), discountprice=($2), quantity=($4), empties=($5) WHERE barcode=($3)", [fullprice, discountprice, barcode, quantity, empties]);
+exports.updateDrink = function(fullprice, discountprice, barcode, quantity, empties, callback) {
+  var query = client.query("UPDATE drinks SET fullprice=($1), discountprice=($2), quantity=($4), empties=($5) WHERE barcode=($3)", [fullprice, discountprice, barcode, quantity, empties]);
+  query.on('end', function() {
+    exports.getDrinkByBarcode(barcode, callback);
+  });
 };
 
 exports.deleteDrinkById = function(drinkId) {

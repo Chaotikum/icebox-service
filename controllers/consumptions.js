@@ -1,6 +1,7 @@
 var persistence = require('../persistence/drinks.js');
 var consumerPersistence = require('../persistence/consumers.js');
 var consumptionpersistence = require('../persistence/consumption.js');
+var broadcast = require('../broadcast/broadcaster.js')
 
 
 exports.getConsumptionRecords = function(req, res) {
@@ -76,7 +77,7 @@ function consumeDrink(res, consumer, drink) {
         //TODO: Tfis makes no sense and cant happen...
         recordConsumptionAnonymous(drink);
       }
-      //TODO: wenn wir ein notification system bauen würde man das wohl hier einhängen...
+      broadcast.sendEvent({eventtype: 'consumption', drink: drink.barcode});
 
       res.json(updatedConsumer);
     })

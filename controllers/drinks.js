@@ -41,9 +41,12 @@ exports.update = function(req, res) {
   var quantity = req.body.quantity;
   var empties = req.body.empties;
 
-  persistence.updateDrink(fullprice, discountprice, barcode, quantity, empties);
+  persistence.updateDrink(fullprice, discountprice, barcode, quantity, empties function(drink) {
 
-  res.end();
+    broadcast.sendEvent({eventtype: 'drinkupdate', drink: drink.barcode});
+
+    res.json(drink)
+  });
 };
 
 exports.destroy = function(req, res) {
