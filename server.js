@@ -1,11 +1,11 @@
-"use strict";
+'use strict';
 
 var express = require('express');
 var bodyParser = require('body-parser');
 var bonjour = require('bonjour')();
 var cors = require('cors');
 var path = require('path');
-var ip = require("ip");
+var ip = require('ip');
 
 var drinks = require('./controllers/drinks.js');
 var consumers = require('./controllers/consumers.js');
@@ -59,7 +59,7 @@ var server = app.listen(8081, function() {
     type: 'http',
     host: ip.address(),
     port: port
-  })
+  });
 
   console.log("IceBox listening at http://%s:%s", host, port);
 });
