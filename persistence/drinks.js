@@ -13,8 +13,10 @@ exports.deleteDrinkById = function(drinkId) {
 };
 
 exports.getDrinkByBarcode = function(barcode, callback) {
+  console.log("get drink by barcode...");
   var query = client.query("SELECT name, barcode, fullprice, discountprice, quantity, empties FROM drinks WHERE barcode=($1) ORDER BY id ASC", [barcode]);
   query.on('row', function(row) {
+    console.log("return drink... ")
     callback(row);
   });
 };
@@ -52,10 +54,12 @@ exports.insertNewDrink = function(name, barcode, fullprice, discountprice, quant
 };
 
 exports.consumeDrink = function(barcode, callback) {
+  console.log("consume Drink");
   var query1 = client.query("UPDATE drinks SET quantity=(quantity-1) WHERE barcode=($1)", [barcode]);
   query1.on('end', function() {
     var query2 = client.query("UPDATE drinks SET empties=(empties+1) WHERE barcode=($1)", [barcode]);
     query2.on('end', function() {
+      console.log("return drink....")
       exports.getDrinkByBarcode(barcode, callback);
     });
   })

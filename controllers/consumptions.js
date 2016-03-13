@@ -15,6 +15,7 @@ exports.create = function(req, res) {
   console.log("create Consumption");
 
   var barcode = req.body.barcode;
+  console.log("for barcode..."+barcode);
   persistence.getDrinkByBarcode(barcode, function(drink) {
     if (drink.quantity == 0) {
       res.status(412);
@@ -22,8 +23,10 @@ exports.create = function(req, res) {
         message: 'According to records this drink is not avaliable.'
       });
     }
+    console.log("ok, we git the drink, its name is..."+drink.name);
     persistence.consumeDrink(barcode, function(drink) {
-      recordConsumptionForUser(drink, "Anon");
+      console.log("ok, we are back from consume drink..."+drink.name);
+      recordConsumptionForUser("Anon", drink);
       res.json(drink);
     });
   });
@@ -72,24 +75,32 @@ function consumeDrink(res, consumer, drink) {
     consumerPersistence.addDeposit(consumer.username, drink.discountprice * (-1), function(updatedConsumer) {
       console.log("2");
       if (consumer.vds) {
-        recordConsumptionForUser(updatedConsumer, drink);
+        console.log("3...");
+        console.log("updatedConsumer: "+updatedConsumer.username);
+        console.log("drink: "+drink.name)
+        recordConsumptionForUser(updatedConsumer.username, drink);
       } else {
+        console.log("4...");
         //TODO: Tfis makes no sense and cant happen...
         recordConsumptionAnonymous(drink);
       }
-      broadcast.sendEvent({eventtype: 'consumption', drink: drink.barcode});
+      broadcast.sendEvent({
+        eventtype: 'consumption',
+        drink: drink.barcode
+      });
 
       res.json(updatedConsumer);
     })
   });
 }
 
-function recordConsumptionForUser(consumer, drink) {
-  console.log("recordConsumptionForUser" + consumer + " " + drink);
-  consumptionpersistence.recordConsumption(consumer.username, drink.barcode);
+function recordConsumptionForUser(username, drink) {
+  console.log("recordConsumptionForUser ->" + username + " " + drink.name);
+  consumptionpersistence.recordConsumption(username, drink.barcode);
 }
 
 function recordConsumptionAnonymous(drink) {
+  console.log("4...");
   console.log("recordConsumptionAnon" + drink);
   consumptionpersistence.recordConsumption("Anon", drink.barcode);
 }
