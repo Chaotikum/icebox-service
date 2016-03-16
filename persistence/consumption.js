@@ -7,7 +7,6 @@ exports.recordConsumption = function(username, barcode) {
   query2.on('row', function(drink) {
     var query1 = client.query("SELECT * FROM consumer WHERE username = ($1)", [username]);
     query1.on('row', function(consumer) {
-      console.log("record with ids...")
       recordConsumptionWithIds(consumer.id, drink.id);
     });
   });
@@ -35,6 +34,7 @@ exports.getAllConsumptionRecords = function(callback) {
 };
 
 exports.getConsumptionRecordsForUser = function(username, callback) {
+  console.log("consumption persistence: Get User with record. ")
   var results = [];
 
   var query = client.query("SELECT consumption.consumetime, consumer.username, drinks.barcode, drinks.name " +

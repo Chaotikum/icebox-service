@@ -1,4 +1,5 @@
 var persistence = require('../persistence/drinks.js');
+var broadcast = require('../broadcast/broadcaster.js');
 
 exports.list = function(req, res) {
   console.log("list Drinks");

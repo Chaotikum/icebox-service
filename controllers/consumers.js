@@ -1,6 +1,6 @@
 var persistence = require('../persistence/consumers.js');
 var consumptions = require('./consumptions.js');
-var broadcast = require('../broadcast/broadcaster.js')
+var broadcast = require('../broadcast/broadcaster.js');
 
 exports.list = function(req, res) {
   console.log("list Consumers");
@@ -38,7 +38,8 @@ exports.showHistory = function(req, res) {
   var username = req.params.username;
   persistence.getConsumersByName(username, function(consumer) {
     consumptions.getConsumptionRecordsForUser(username, function(consumptions) {
-
+      consumer['log']=consumptions;
+      res.json(consumer);
     });
   });
 }
@@ -78,7 +79,6 @@ exports.addDeposit = function(req, res) {
   console.log("amount "+amount);
 
   if (amount < 500) {
-    console.log("<500");
     res.status(422);
     res.json({
       message: 'Only positive amounts over 500 allowed.'
