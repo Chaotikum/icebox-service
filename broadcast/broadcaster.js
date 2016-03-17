@@ -45,8 +45,7 @@ function buzz(eventcontent, i) {
 function sendMessage(dgramServer, message, networkinterface, callback) {
     dgramServer.send(message, 0, message.length, 6004, 'FF02::6004%'+networkinterface, function(err, bytes) {
     if (err) {
-      console.log("err");
-      throw err;
+      console.log("err when sending send UDP Message");
     }
     callback();
     console.log("server close");
