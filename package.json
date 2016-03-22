@@ -30,10 +30,10 @@
     "cors": "2.7.1",
     "express": "^4.13.4",
     "ip": "1.1.1",
-    "jake": "latest",
     "pg": "^4.4.4"
   },
   "devDependencies": {
+    "jake": "latest",
     "jshint": "^2.9.1",
     "mocha": "^2.4.5",
     "nodemon": "^1.8.1",
