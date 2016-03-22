@@ -1,15 +1,20 @@
 'use strict';
 
-var express = require('express');
 var bodyParser = require('body-parser');
 var bonjour = require('bonjour')();
 var cors = require('cors');
-var path = require('path');
+var express = require('express');
 var ip = require('ip');
+var path = require('path');
 
-var drinks = require('./controllers/drinks.js');
-var consumers = require('./controllers/consumers.js');
+var broadcast = require('./broadcast/broadcaster.js');
+var persistence = require('./persistence/persistence.js');
+var consumersP = require('./persistence/consumers.js');
+
+var consumers = require('./controllers/consumers.js')(persistence, consumersP, broadcast);
 var consumptions = require('./controllers/consumptions.js');
+var drinks = require('./controllers/drinks.js');
+
 
 var app = express();
 

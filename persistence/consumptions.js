@@ -1,7 +1,6 @@
-var persistence = require('./persistence.js');
-var client = persistence.client;
+'use strict';
 
-exports.recordConsumption = function(username, barcode) {
+exports.recordConsumption = function(client, username, barcode) {
   console.log("persistence, record consumption " + username + " " + barcode);
   var query2 = client.query("SELECT * FROM drinks WHERE barcode = ($1)", [barcode]);
   query2.on('row', function(drink) {
@@ -12,12 +11,12 @@ exports.recordConsumption = function(username, barcode) {
   });
 };
 
-function recordConsumptionWithIds(consumer_id, drink_id) {
+function recordConsumptionWithIds(client, consumer_id, drink_id) {
   console.log("recordConsumptionWithIds");
   var query = client.query("INSERT INTO consumption (consumetime, consumer_id, drink_id) values (CURRENT_TIMESTAMP, $1, $2)", [consumer_id, drink_id]);
 }
 
-exports.getAllConsumptionRecords = function(callback) {
+exports.getAllConsumptionRecords = function(client, callback) {
   var results = [];
 
   var query = client.query("SELECT consumption.consumetime, consumer.username, drinks.barcode, drinks.name " +
@@ -33,20 +32,24 @@ exports.getAllConsumptionRecords = function(callback) {
   });
 };
 
-exports.getConsumptionRecordsForUser = function(username, callback) {
-  console.log("consumption persistence: Get User with record. ")
-  var results = [];
+exports.getConsumptionRecordsForUser = function(client, username, callback) {
+  console.log("consumption persistence: Get User with record. ");
 
-  var query = client.query("SELECT consumption.consumetime, consumer.username, drinks.barcode, drinks.name " +
-    "FROM consumption LEFT OUTER JOIN consumer ON (consumption.consumer_id = consumer.id) " +
-    "LEFT OUTER JOIN drinks ON (consumption.drink_id = drinks.id) " +
-    "WHERE consumer.username = ($1) " +
-    "ORDER BY consumption.consumetime DESC", [username]);
+  var query = client.query("SELECT consumptions.consumetime, consumers.username, drinks.barcode, drinks.name " +
+    "FROM consumptions " +
+    "LEFT OUTER JOIN consumers ON (consumptions.consumer_id = consumers.id) " +
+    "LEFT OUTER JOIN drinks ON (consumptions.drink_id = drinks.id) " +
+    "WHERE consumers.username = ($1) " +
+    "ORDER BY consumptions.consumetime DESC",
+    [username]);
 
-  query.on('row', function(row) {
-    results.push(row);
+  query.on('row', function(row, result) {
+    result.addRow(row);
   });
-  query.on('end', function() {
-    callback(results);
+  query.on('error', function(error) {
+    callback(error);
   });
-}
+  query.on('end', function(result) {
+    callback(null, result.rows);
+  });
+};

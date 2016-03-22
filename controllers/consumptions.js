@@ -1,6 +1,6 @@
 var persistence = require('../persistence/drinks.js');
 var consumerPersistence = require('../persistence/consumers.js');
-var consumptionpersistence = require('../persistence/consumption.js');
+var consumptionpersistence = require('../persistence/consumptions.js');
 var broadcast = require('../broadcast/broadcaster.js');
 
 

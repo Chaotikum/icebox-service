@@ -1,6 +1,7 @@
 var pg = require('pg');
 
-var connectionString = process.env.DATABASE_URL || 'postgres://iceboxuser:testForIce@localhost:5432/icobox';
-var client = new pg.Client(connectionString);
-client.connect();
-exports.client = client;
+var connectionString = process.env.ICEBOX_DB_URL || 'postgres://iceboxuser:testForIce@localhost:5432/icobox';
+
+exports.connect = function(callback) {
+  pg.connect(connectionString, callback);
+};
