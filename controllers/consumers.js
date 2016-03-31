@@ -1,7 +1,5 @@
 'use strict';
 
-var consumptionsPersistence = require('../persistence/consumptions.js');
-
 var handleError = function(err, client, done, res) {
   // no error occurred, continue with the request
   if(!err) return false;
@@ -16,7 +14,7 @@ var handleError = function(err, client, done, res) {
   return true;
 };
 
-module.exports = function(pg, persistence, broadcast) {
+module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
   var consumers = {};
 
   consumers.list = function(req, res) {
@@ -126,7 +124,7 @@ module.exports = function(pg, persistence, broadcast) {
     console.log("manipulate Consumer");
 
     var userdata = {
-      username: req.body.username,
+      username: req.params.username,
       avatarmail: req.body.avatarmail,
       vds: req.body.vds
     };
@@ -136,7 +134,7 @@ module.exports = function(pg, persistence, broadcast) {
 
       persistence.manipulateConsumer(client, userdata, function(err, consumer) {
         if(handleError(err, client, done, res)) return;
-        
+
         done();
         res.json(consumer);
       });
@@ -165,7 +163,7 @@ module.exports = function(pg, persistence, broadcast) {
 
       persistence.addDeposit(client, username, amount, function(err, consumer) {
         if(handleError(err, client, done, res)) return;
-        
+
         done();
         res.json(consumer);
       });

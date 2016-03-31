@@ -1,63 +1,101 @@
-var persistence = require('../persistence/drinks.js');
-var broadcast = require('../broadcast/broadcaster.js');
+'use strict';
 
-exports.list = function(req, res) {
-  console.log("list Drinks");
+var handleError = function(err, client, done, res) {
+  // no error occurred, continue with the request
+  if (!err) return false;
 
-  persistence.getAllDrinksByPopularity(function(drinks){
-    res.json(drinks);
+  // An error occurred, remove the client from the connection pool.
+  if (client) {
+    done(client);
+  }
+  res.writeHead(500, {
+    'content-type': 'text/plain'
   });
+  res.end('An error occurred');
+  console.error("Error handler ran on", err);
+  return true;
 };
 
-exports.create = function(req, res) {
-  console.log("create Drink");
+module.exports = function(pg, persistence, broadcast) {
+  var drinks = {};
 
-  var name = req.body.productname;
-  var barcode = req.body.barcode;
-  var fullprice = req.body.fullprice;
-  var discountprice = req.body.discountprice;
-  var quantity = req.body.quantity;
-  var empties = req.body.empties;
+  drinks.list = function(req, res) {
+    console.log("list Drinks");
 
-  persistence.insertNewDrink(name, barcode, fullprice, discountprice, quantity, empties, function(drink) {
-      res.json(drink);
-  });
-};
+    pg.connect(function(err, client, done) {
+      if (handleError(err, client, done, res)) return;
 
-exports.show = function(req, res) {
-  console.log("get Drink");
+      persistence.getAllDrinksByPopularity(client, function(drinks) {
+        res.json(drinks);
+      });
+    });
+  };
 
-  var barcode = req.params.barcode;
-  persistence.getDrinkByBarcode(barcode, function(drink){
-    res.json(drink);
-  });
-};
+  drinks.create = function(req, res) {
+    console.log("create Drink");
 
-exports.update = function(req, res) {
-  console.log("update Drink");
+    var name = req.body.productname;
+    var barcode = req.body.barcode;
+    var fullprice = req.body.fullprice;
+    var discountprice = req.body.discountprice;
+    var quantity = req.body.quantity;
+    var empties = req.body.empties;
 
-  var barcode = req.params.barcode;
-  var fullprice = req.body.fullprice;
-  var discountprice = req.body.discountprice;
-  var quantity = req.body.quantity;
-  var empties = req.body.empties;
+    pg.connect(function(err, client, done) {
+      if (handleError(err, client, done, res)) return;
+      persistence.insertNewDrink(client, name, barcode, fullprice, discountprice, quantity, empties, function(drink) {
+        res.status(201);
+        res.json(drink);
+      });
+    });
+  };
 
-  persistence.updateDrink(fullprice, discountprice, barcode, quantity, empties, function(drink) {
+  drinks.show = function(req, res) {
+    console.log("get Drink");
 
-    broadcast.sendEvent({eventtype: 'drinkupdate', drink: drink.barcode});
+    var barcode = req.params.barcode;
+    pg.connect(function(err, client, done) {
+      persistence.getDrinkByBarcode(client, barcode, function(drink) {
+        res.json(drink);
+      });
+    });
+  };
 
-    res.json(drink)
-  });
-};
+  drinks.update = function(req, res) {
+    console.log("update Drink");
 
-exports.destroy = function(req, res) {
-  console.log("destroy Drink");
+    var barcode = req.params.barcode;
+    var fullprice = req.body.fullprice;
+    var discountprice = req.body.discountprice;
+    var quantity = req.body.quantity;
+    var empties = req.body.empties;
 
-  var barcode = req.params.barcode;
+    pg.connect(function(err, client, done) {
+      persistence.updateDrink(client, fullprice, discountprice, barcode, quantity, empties, function(drink) {
 
-  persistence.getDrinkByBarcode(barcode, function(drink){
-    persistence.deleteDrinkById(drink.id);
-  });
+        broadcast.sendEvent({
+          eventtype: 'drinkupdate',
+          drink: drink.barcode
+        });
 
-  res.end();
+        res.json(drink)
+      });
+    });
+  };
+
+  drinks.destroy = function(req, res) {
+    console.log("destroy Drink");
+
+    var barcode = req.params.barcode;
+
+    pg.connect(function(err, client, done) {
+      persistence.getDrinkByBarcode(client, barcode, function(drink) {
+        persistence.deleteDrinkById(client, drink.id);
+      });
+
+      res.end();
+    });
+  };
+
+  return drinks;
 };

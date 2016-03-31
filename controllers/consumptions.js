@@ -1,95 +1,147 @@
-var persistence = require('../persistence/drinks.js');
-var consumerPersistence = require('../persistence/consumers.js');
-var consumptionpersistence = require('../persistence/consumptions.js');
-var broadcast = require('../broadcast/broadcaster.js');
+'use strict';
 
+var handleError = function(err, client, done, res) {
+  // no error occurred, continue with the request
+  if (!err) return false;
 
-exports.getConsumptionRecords = function(req, res) {
-  console.log("get Consumption Record");
-  consumptionpersistence.getAllConsumptionRecords(function(consumptionRecords) {
-    res.json(consumptionRecords);
+  // An error occurred, remove the client from the connection pool.
+  if (client) {
+    done(client);
+  }
+  res.writeHead(500, {
+    'content-type': 'text/plain'
   });
-}
-
-exports.create = function(req, res) {
-  console.log("create Consumption");
-
-  var barcode = req.body.barcode;
-  persistence.getDrinkByBarcode(barcode, function(drink) {
-    if (drink.quantity == 0) {
-      res.status(412);
-      res.json({
-        message: 'According to records this drink is not avaliable.'
-      });
-    }
-    persistence.consumeDrink(barcode, function(drink) {
-      recordConsumptionForUser("Anon", drink);
-      res.json(drink);
-    });
-  });
+  res.end('An error occurred');
+  console.error("Error handler ran on", err);
+  return true;
 };
 
+module.exports = function(pg, persistence, consumerPersistence, consumptionsPersistence, broadcast) {
+  var consumptions = {};
 
-exports.createWithConsumer = function(req, res) {
-  console.log("create Consumption with Consumer");
+  consumptions.getConsumptionRecords = function(req, res) {
+    console.log("get Consumption Record");
 
-  var username = req.params.username;
-  var barcode = req.body.barcode;
+    pg.connect(function(err, client, done) {
+      if (handleError(err, client, done, res)) return;
 
-  persistence.getDrinkByBarcode(barcode, function(drink) {
-    consumerPersistence.getConsumersByName(username, function(consumer) {
-      var price = drink.fullprice;
-      if (consumer.ledger > 0) {
-        var price = drink.discountprice;
-      }
-      if (consumer.ledger < price && consumer.username != "Anon") {
-        res.status(402);
-        res.json({
-          message: 'Insfficient Funds'
-        });
-      } else {
+      consumptionsPersistence.getAllConsumptionRecords(client, function(consumptionRecords) {
+        res.status(201);
+        res.json(consumptionRecords);
+      });
+    });
+  }
+
+  consumptions.create = function(req, res) {
+    console.log("create Consumption");
+
+    var barcode = req.body.barcode;
+
+    pg.connect(function(err, client, done) {
+      if (handleError(err, client, done, res)) return;
+
+      persistence.getDrinkByBarcode(client, barcode, function(drink) {
         if (drink.quantity == 0) {
+          done();
           res.status(412);
           res.json({
             message: 'According to records this drink is not avaliable.'
           });
-        } else {
-          consumeDrink(res, consumer, drink);
         }
-      }
-    });
-  });
-};
+        persistence.consumeDrink(client, barcode, function(drink) {
+          recordConsumptionForUser(client, "Anon", drink);
 
-function consumeDrink(res, consumer, drink) {
-  console.log("consume drink " + drink.name + " " + consumer.username);
-  persistence.consumeDrink(drink.barcode, function(drink) {
-    consumerPersistence.addDeposit(consumer.username, drink.discountprice * (-1), function(updatedConsumer) {
-      if (consumer.vds) {
-        recordConsumptionForUser(updatedConsumer.username, drink);
-      } else {
-        //TODO: Tfis makes no sense and cant happen...
-        recordConsumptionAnonymous(drink);
-      }
-      broadcast.sendEvent({
-        eventtype: 'consumption',
-        drink: drink.barcode
+          done();
+          res.json(drink);
+        });
       });
+    });
+  };
 
-      res.json(updatedConsumer);
-    })
-  });
-}
 
-function recordConsumptionForUser(username, drink) {
-  console.log("recordConsumptionForUser ->" + username + " " + drink.name);
-  consumptionpersistence.recordConsumption(username, drink.barcode);
-}
+  consumptions.createWithConsumer = function(req, res) {
+    console.log("create Consumption with Consumer");
 
-function recordConsumptionAnonymous(drink) {
-  consumptionpersistence.recordConsumption("Anon", drink.barcode);
-}
+    var username = req.params.username;
+    var barcode = req.body.barcode;
 
-exports.getConsumptionRecordsForUser = function(username, callback) {
-  consumptionpersistence.getConsumptionRecordsForUser(username, callback)
-}
+    pg.connect(function(err, client, done) {
+      if (handleError(err, client, done, res)) return;
+
+      persistence.getDrinkByBarcode(client, barcode, function(drink) {
+        console.log(JSON.stringify(drink));
+        consumerPersistence.getConsumersByName(client, username, function(err, consumer) {
+          console.log("1 "+JSON.stringify(consumer));
+          var price = drink.fullprice;
+          if (consumer.ledger > 0) {
+            var price = drink.discountprice;
+          }
+          if (consumer.ledger < price && consumer.username != "Anon") {
+            res.status(402);
+            res.json({
+              message: 'Insfficient Funds'
+            });
+          } else {
+            if (drink.quantity == 0) {
+              res.status(412);
+              res.json({
+                message: 'According to records this drink is not avaliable.'
+              });
+            } else {
+              consumeDrink(res, consumer, drink);
+            }
+          }
+        });
+      });
+    });
+  };
+
+  consumptions.getConsumptionRecordsForUser = function(username, callback) {
+    pg.connect(function(err, client, done) {
+      if (handleError(err, client, done, res)) return;
+
+      consumptionsPersistence.getConsumptionRecordsForUser(client, username, callback);
+    });
+  }
+
+  function consumeDrink(res, consumer, drink) {
+    console.log("consume drink " + drink.name + " " + consumer.username);
+
+    pg.connect(function(err, client, done) {
+      if (handleError(err, client, done, res)) return;
+
+      persistence.consumeDrink(client, drink.barcode, function(drink) {
+        consumerPersistence.addDeposit(client, consumer.username, drink.discountprice * (-1), function(err, updatedConsumer) {
+          if (consumer.vds) {
+            recordConsumptionForUser(client, updatedConsumer.username, drink);
+          } else {
+            //TODO: This makes no sense and cant happen...
+            recordConsumptionAnonymous(client, drink);
+          }
+          broadcast.sendEvent({
+            eventtype: 'consumption',
+            drink: drink.barcode
+          });
+
+          done();
+          res.status(201);
+          res.json(updatedConsumer);
+        })
+      });
+    });
+  }
+
+  function recordConsumptionForUser(client, username, drink) {
+    console.log("recordConsumptionForUser ->" + username + " " + drink.name);
+
+    consumptionsPersistence.recordConsumption(client, username, drink.barcode);
+
+  }
+
+  function recordConsumptionAnonymous(client, drink) {
+
+    consumptionsPersistence.recordConsumption(client, "Anon", drink.barcode);
+  }
+
+  return consumptions;
+};

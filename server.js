@@ -10,10 +10,12 @@ var path = require('path');
 var broadcast = require('./broadcast/broadcaster.js');
 var persistence = require('./persistence/persistence.js');
 var consumersP = require('./persistence/consumers.js');
+var drinksP = require('./persistence/drinks.js');
+var consumptionsP = require('./persistence/consumptions.js');
 
-var consumers = require('./controllers/consumers.js')(persistence, consumersP, broadcast);
-var consumptions = require('./controllers/consumptions.js');
-var drinks = require('./controllers/drinks.js');
+var consumers = require('./controllers/consumers.js')(persistence, consumersP, broadcast, consumptionsP);
+var consumptions = require('./controllers/consumptions.js')(persistence, drinksP, consumersP, consumptionsP, broadcast);
+var drinks = require('./controllers/drinks.js')(persistence, drinksP, broadcast);
 
 
 var app = express();
@@ -50,9 +52,9 @@ app.post('/consumers/:username/deposit', consumers.addDeposit);
 app.delete('/consumers/:username', consumers.destroy);
 app.put('/consumers/:username', consumers.manipulate);
 
-app.get('/consumption', consumptions.getConsumptionRecords);
-app.post('/consumption/:username', consumptions.createWithConsumer);
-app.post('/consumption', consumptions.create);
+app.get('/consumptions', consumptions.getConsumptionRecords);
+app.post('/consumptions/:username', consumptions.createWithConsumer);
+app.post('/consumptions', consumptions.create);
 
 var server = app.listen(8081, function() {
 

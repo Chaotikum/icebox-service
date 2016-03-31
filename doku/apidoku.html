@@ -1,75 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
   <meta charset="utf-8">
-  <body>
-    <p>OHAI Hier kommt bald ne richtige Doku hin. Wird voll gut, sagt @HerrStachel</p>
-    <h3>API</h3>
-    <p> GET '/drinks'</p>
-    <p> POST '/drinks'</p>
-    <p> GET '/drinks/:barcode'</p>
-    <p> PUT '/drinks/:barcode'</p>
-    <p> DELETE '/drinks/:barcode'</p>
+<head>
+<style>
+html,body,iframe {
+  height:100%;
+  width:100%
+}
 
-    <p> GET '/consumers'</p>
-    <p> POST '/consumers'</p>
-    <p> GET '/consumers/:username'</p>
-    <p> GET '/consumers/:username/history'</p>
-    <p> POST '/consumers/:username/deposit'</p>
-    <p> DELETE '/consumers/:username'</p>
-    <p> PUT '/consumers/:username'</p>
-
-    <p> GET '/consumption'</p>
-    <p> POST '/consumption/:username'</p>
-    <p> POST '/consumption'</p>
-    <h3>UDP EVENTS</h3>
-    <p>Auf der Gruppe
-      <i>FF02::6004</i>
-      schickt die
-      <i>IceBox</i>
-      Multicast-Nachrichten. Die Nachrichten beinhalten einen kleinen JSON-String</p>
-    <p>Die JSON-Elemente haben die Folgende Struktur</p>
-    <p>Wenn ein Getränk gekauft wurde:</p>
-    <code>
-      {
-        "eventtime":1457277798169,
-        "eventcontent":
-        {
-          "eventtype":"consumption",
-          "drink":"4260031874056"
-        }
-      }
-    </code>
-    <p>Wenn sich ein neuer User registriert:</p>
-    <code>
-      {
-        "eventtime":1457277798169,
-        "eventcontent":
-        {
-          "eventtype":"newuser",
-          "username":"tvluke"
-        }
-      }
-    </code>
-    <p>Wenn die Daten zu einem Getränk geändert wurde:</p>
-    <code>
-      {
-        "eventtime":1457277798169,
-        "eventcontent":
-        {
-          "eventtype":"drinkupdate",
-          "drink":"4260031874056"
-        }
-      }
-    </code>
-    <h1>Terms of Use</h1>
-    <p> You may not use data provided by this API to deanonymize userinteactions that are listed as anonymous.</p>
-
-    <p>You may not provided data gathered from this api outisde the local network if it contains userdata provided by this API or allows clear and recognizable correlation between data provided by your service and consumer data.</p>
-
-    <p> It is expressly allowed to provided data on drinks and accumulated data on consumption. It is expressly allowed to provide accumulated and anonymized data.</p>
-
-    <p>Use of this API in any other application that des not abide by the listed <i>terms of use</i> Such use, if not ceased on request, may result in a banning the service<p>
-
-    <p>The terms of use may be changed or updated anytime. They are valid as soon as they are published<Tp>
-  </body>
+</style>
+</head>
+<body>
+  <iframe frameBorder="0" src="http://docs.iceboxservice.apiary.io/"></iframe>
+</body>
 </html>
