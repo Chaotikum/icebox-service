@@ -26,6 +26,8 @@ module.exports = function(pg, persistence, broadcast) {
       if (handleError(err, client, done, res)) return;
 
       persistence.getAllDrinksByPopularity(client, function(drinks) {
+
+        done();
         res.json(drinks);
       });
     });
@@ -44,6 +46,8 @@ module.exports = function(pg, persistence, broadcast) {
     pg.connect(function(err, client, done) {
       if (handleError(err, client, done, res)) return;
       persistence.insertNewDrink(client, name, barcode, fullprice, discountprice, quantity, empties, function(drink) {
+
+        done();
         res.status(201);
         res.json(drink);
       });
@@ -56,6 +60,8 @@ module.exports = function(pg, persistence, broadcast) {
     var barcode = req.params.barcode;
     pg.connect(function(err, client, done) {
       persistence.getDrinkByBarcode(client, barcode, function(drink) {
+
+        done();
         res.json(drink);
       });
     });
@@ -78,6 +84,7 @@ module.exports = function(pg, persistence, broadcast) {
           drink: drink.barcode
         });
 
+        done();
         res.json(drink)
       });
     });
@@ -93,6 +100,7 @@ module.exports = function(pg, persistence, broadcast) {
         persistence.deleteDrinkById(client, drink.id);
       });
 
+      done();
       res.end();
     });
   };

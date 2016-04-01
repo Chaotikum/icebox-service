@@ -26,6 +26,7 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
       if (handleError(err, client, done, res)) return;
 
       consumptionsPersistence.getAllConsumptionRecords(client, function(consumptionRecords) {
+        done();
         res.status(201);
         res.json(consumptionRecords);
       });
