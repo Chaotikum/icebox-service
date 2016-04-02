@@ -64,8 +64,7 @@ namespace('db', function() {
 
       client.query(
         'INSERT INTO consumers (username, ledger, vds) ' +
-        'VALUES (\'Anon\', 0, true) ' +
-        'ON CONFLICT (username) DO NOTHING',
+        'VALUES (\'Anon\', 0, true)',
         function(err) {
           if(err) {
             return console.error('error creating Anon user', err);
