@@ -40,7 +40,8 @@ namespace('db', function() {
         'username VARCHAR(200) not null UNIQUE, ' +
         'ledger INTEGER not null CONSTRAINT positive_ledger CHECK (ledger >= 0), ' +
         'avatarmail VARCHAR(254), ' +
-        'vds BOOLEAN)',
+        'vds BOOLEAN, ' +
+        'lastchange TIMESTAMP DEFAULT current_timestamp)',
         function(err) {
           if(err) {
             return console.error('error creating consumers table', err);
