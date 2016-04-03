@@ -31,7 +31,7 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
 
       consumptionsPersistence.getAllConsumptionRecords(client, days, function(consumptionRecords) {
         done();
-        res.status(201);
+        res.status(200);
         res.json(consumptionRecords);
       });
     });
