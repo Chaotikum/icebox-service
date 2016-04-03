@@ -16,13 +16,17 @@ function recordConsumptionWithIds(client, consumer_id, drink_id) {
   var query = client.query("INSERT INTO consumptions (consumetime, consumer_id, drink_id) values (CURRENT_TIMESTAMP, $1, $2)", [consumer_id, drink_id]);
 }
 
-exports.getAllConsumptionRecords = function(client, callback) {
+exports.getAllConsumptionRecords = function(client, days, callback) {
   var results = [];
+
+  var d = new Date();
+  d.setDate(d.getDate()-days);
 
   var query = client.query("SELECT consumptions.consumetime, consumers.username, drinks.barcode, drinks.name " +
     "FROM consumptions LEFT OUTER JOIN consumers ON (consumptions.consumer_id = consumers.id) " +
     "LEFT OUTER JOIN drinks ON (consumptions.drink_id = drinks.id) " +
-    "ORDER BY consumptions.consumetime DESC");
+    "WHERE consumptions.consumetime > ($1) " +
+    "ORDER BY consumptions.consumetime DESC", [d]);
 
   query.on('row', function(row) {
     results.push(row);
@@ -32,16 +36,19 @@ exports.getAllConsumptionRecords = function(client, callback) {
   });
 };
 
-exports.getConsumptionRecordsForUser = function(client, username, callback) {
+exports.getConsumptionRecordsForUser = function(client, username, days, callback) {
   console.log("consumptions persistence: Get User with record. ");
+
+  var d = new Date();
+  d.setDate(d.getDate()-days);
 
   var query = client.query("SELECT consumptions.consumetime, consumers.username, drinks.barcode, drinks.name " +
     "FROM consumptions " +
     "LEFT OUTER JOIN consumers ON (consumptions.consumer_id = consumers.id) " +
     "LEFT OUTER JOIN drinks ON (consumptions.drink_id = drinks.id) " +
-    "WHERE consumers.username = ($1) " +
+    "WHERE consumers.username = ($1) AND consumptions.consumetime > ($2) " +
     "ORDER BY consumptions.consumetime DESC",
-    [username]);
+    [username, d]);
 
   query.on('row', function(row, result) {
     result.addRow(row);

@@ -22,10 +22,14 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
   consumptions.getConsumptionRecords = function(req, res) {
     console.log("get Consumption Record");
 
+    var days = req.params.days;
+
+    console.log("days back: "+days);
+
     pg.connect(function(err, client, done) {
       if (handleError(err, client, done, res)) return;
 
-      consumptionsPersistence.getAllConsumptionRecords(client, function(consumptionRecords) {
+      consumptionsPersistence.getAllConsumptionRecords(client, days, function(consumptionRecords) {
         done();
         res.status(201);
         res.json(consumptionRecords);
@@ -72,7 +76,9 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
       persistence.getDrinkByBarcode(client, barcode, function(drink) {
         console.log(JSON.stringify(drink));
         consumerPersistence.getConsumersByName(client, username, function(err, consumer) {
-          console.log("1 "+JSON.stringify(consumer));
+          if (handleError(err, client, done, res)) return;
+
+          console.log("1 " + JSON.stringify(consumer));
           var price = drink.fullprice;
           if (consumer.ledger > 0) {
             var price = drink.discountprice;

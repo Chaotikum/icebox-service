@@ -82,6 +82,7 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
     console.log("show Consumer With History");
 
     var username = req.params.username;
+    var days = req.params.days;
 
     pg.connect(function(err, client, done) {
       if(handleError(err, client, done, res)) return;
@@ -89,7 +90,7 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
       persistence.getConsumersByName(client, username, function(err, consumer) {
         if(handleError(err, client, done, res)) return;
 
-        consumptionsPersistence.getConsumptionRecordsForUser(client, username, function(err, consumptions) {
+        consumptionsPersistence.getConsumptionRecordsForUser(client, username, days, function(err, consumptions) {
           if(handleError(err, client, done, res)) return;
 
           consumer.log = consumptions;
