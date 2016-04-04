@@ -3,8 +3,8 @@
 var should = require("should");
 var supertest = require("supertest");
 
-// This agent refers to PORT where program is runninng.
-var server = supertest.agent("http://localhost:8081");
+var server = supertest(require('../../server'));
+
 
 describe("drinks collection resource", function() {
   describe("GET /drinks", function() {

@@ -4,9 +4,9 @@
   "description": "The icebox service. Manage all your beverages.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "./node_modules/nodemon/bin/nodemon.js server.js",
-    "test": "./node_modules/mocha/bin/mocha"
+    "start": "node app.js",
+    "dev": "./node_modules/nodemon/bin/nodemon.js app.js",
+    "test": "./node_modules/mocha/bin/mocha --recursive"
   },
   "repository": {
     "type": "git",

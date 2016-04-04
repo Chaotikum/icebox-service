@@ -1,10 +1,8 @@
 'use strict';
 
 var bodyParser = require('body-parser');
-var bonjour = require('bonjour')();
 var cors = require('cors');
 var express = require('express');
-var ip = require('ip');
 var path = require('path');
 
 var broadcast = require('./broadcast/broadcaster.js');
@@ -25,12 +23,11 @@ app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
   extended: true
 }));
 
-
 cors({
   credentials: true,
   origin: true
 });
-app.use(cors());
+app.use(cors()); // Support cross orgin requests
 
 //Doku
 app.get('/', function(req, res) {
@@ -56,17 +53,5 @@ app.get('/consumptions/:days', consumptions.getConsumptionRecords);
 app.post('/consumptions/:username', consumptions.createWithConsumer);
 app.post('/consumptions', consumptions.create);
 
-var server = app.listen(8081, function() {
-
-  var host = server.address().address;
-  var port = server.address().port;
-
-  bonjour.publish({
-    name: 'IceBox',
-    type: 'http',
-    host: ip.address(),
-    port: port
-  });
-
-  console.log("IceBox listening at http://%s:%s", host, port);
-});
+// Export app object
+module.exports = app;
