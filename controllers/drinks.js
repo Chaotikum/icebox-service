@@ -25,7 +25,8 @@ module.exports = function(pg, persistence, broadcast) {
     pg.connect(function(err, client, done) {
       if (handleError(err, client, done, res)) return;
 
-      persistence.getAllDrinksByPopularity(client, function(drinks) {
+      persistence.getAllDrinksByPopularity(client, function(err, drinks) {
+        if (handleError(err, client, done, res)) return;
 
         done();
         res.json(drinks);
@@ -36,16 +37,20 @@ module.exports = function(pg, persistence, broadcast) {
   drinks.create = function(req, res) {
     console.log("create Drink");
 
-    var name = req.body.productname;
-    var barcode = req.body.barcode;
-    var fullprice = req.body.fullprice;
-    var discountprice = req.body.discountprice;
-    var quantity = req.body.quantity;
-    var empties = req.body.empties;
+    var drinkdata = {
+      name: req.body.name,
+      barcode: req.body.barcode,
+      fullprice: req.body.fullprice,
+      discountprice: req.body.discountprice,
+      quantity: req.body.quantity,
+      empties: req.body.empties
+    };
 
     pg.connect(function(err, client, done) {
       if (handleError(err, client, done, res)) return;
-      persistence.insertNewDrink(client, name, barcode, fullprice, discountprice, quantity, empties, function(drink) {
+
+      persistence.insertNewDrink(client, drinkdata, function(err, drink) {
+        if (handleError(err, client, done, res)) return;
 
         done();
         res.status(201);
@@ -85,7 +90,7 @@ module.exports = function(pg, persistence, broadcast) {
         });
 
         done();
-        res.json(drink)
+        res.json(drink);
       });
     });
   };
