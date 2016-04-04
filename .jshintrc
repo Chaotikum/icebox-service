@@ -1,4 +1,10 @@
 {
   "node": true,
-  "mocha": true
+  "mocha": true,
+  "curly": true,
+  "eqeqeq": true,
+  "freeze": true,
+  "maxdepth": 3,
+  "maxstatements": 15,
+  "eqnull": true
 }
