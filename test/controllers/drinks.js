@@ -45,7 +45,7 @@ describe("drinks collection resource", function() {
       });
     });
   });
-});
+    });
 
 describe("drink entity resource", function() {
   describe("GET /drinks/:barcode", function() {
@@ -93,8 +93,8 @@ describe("drink entity resource", function() {
         done();
       });
     });
-  });
-  
+    });
+
   describe("DELETE /drinks/:barcode", function() {
     it.skip("removes the drink from the store", function(done) {
       request(app)
