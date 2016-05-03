@@ -45,7 +45,7 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
     pg.connect(function(err, client, done) {
       if (handleError(err, client, done, res)) return;
 
-      persistence.getDrinkByBarcode(client, barcode, function(drink) {
+      persistence.getDrinkByBarcode(client, barcode, function(err, drink) {
         if (drink.quantity == 0) {
           done();
           res.status(412);
@@ -73,7 +73,7 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
     pg.connect(function(err, client, done) {
       if (handleError(err, client, done, res)) return;
 
-      persistence.getDrinkByBarcode(client, barcode, function(drink) {
+      persistence.getDrinkByBarcode(client, barcode, function(err, drink) {
         console.log(JSON.stringify(drink));
         consumerPersistence.getConsumersByName(client, username, function(err, consumer) {
           if (handleError(err, client, done, res)) return;
@@ -117,7 +117,7 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
     pg.connect(function(err, client, done) {
       if (handleError(err, client, done, res)) return;
 
-      persistence.consumeDrink(client, drink.barcode, function(drink) {
+      persistence.consumeDrink(client, drink.barcode, function(err, drink) {
         consumerPersistence.addDeposit(client, consumer.username, drink.discountprice * (-1), function(err, updatedConsumer) {
           if (consumer.vds) {
             recordConsumptionForUser(client, updatedConsumer.username, drink);

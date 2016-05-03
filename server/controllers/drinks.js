@@ -64,7 +64,7 @@ module.exports = function(pg, persistence, broadcast) {
 
     var barcode = req.params.barcode;
     pg.connect(function(err, client, done) {
-      persistence.getDrinkByBarcode(client, barcode, function(drink) {
+      persistence.getDrinkByBarcode(client, barcode, function(err, drink) {
 
         done();
         res.json(drink);
@@ -101,7 +101,7 @@ module.exports = function(pg, persistence, broadcast) {
     var barcode = req.params.barcode;
 
     pg.connect(function(err, client, done) {
-      persistence.getDrinkByBarcode(client, barcode, function(drink) {
+      persistence.getDrinkByBarcode(client, barcode, function(err, drink) {
         persistence.deleteDrinkById(client, drink.id);
       });
 
