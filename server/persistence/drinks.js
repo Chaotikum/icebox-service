@@ -33,7 +33,7 @@ exports.getAllDrinksByPopularity = function(client, callback) {
 exports.insertNewDrink = function(client, data, callback) {
   var query = client.query(
     "INSERT INTO drinks(name, barcode, fullprice, discountprice, quantity, empties) " +
-    "VALUES ($1, $2, $3, $4, $5, $6)  ON CONFLICT DO NOTHING",
+    "VALUES ($1, $2, $3, $4, $5, $6)",
     [data.name, data.barcode, data.fullprice, data.discountprice, data.quantity, data.empties],
     function(err, result) {
       if(err) callback(err);
