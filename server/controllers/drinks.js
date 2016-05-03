@@ -82,7 +82,7 @@ module.exports = function(pg, persistence, broadcast) {
     var empties = req.body.empties;
 
     pg.connect(function(err, client, done) {
-      persistence.updateDrink(client, fullprice, discountprice, barcode, quantity, empties, function(drink) {
+      persistence.updateDrink(client, fullprice, discountprice, barcode, quantity, empties, function(err, drink) {
 
         broadcast.sendEvent({
           eventtype: 'drinkupdate',
