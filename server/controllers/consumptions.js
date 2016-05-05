@@ -84,17 +84,20 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
             var price = drink.discountprice;
           }
           if (consumer.ledger < price && consumer.username != "Anon") {
+            done();
             res.status(402);
             res.json({
               message: 'Insfficient Funds'
             });
           } else {
             if (drink.quantity == 0) {
+              done();
               res.status(412);
               res.json({
                 message: 'According to records this drink is not avaliable.'
               });
             } else {
+              done();
               consumeDrink(res, consumer, drink);
             }
           }
@@ -108,6 +111,7 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
       if (handleError(err, client, done, res)) return;
 
       consumptionsPersistence.getConsumptionRecordsForUser(client, username, callback);
+      done();
     });
   }
 

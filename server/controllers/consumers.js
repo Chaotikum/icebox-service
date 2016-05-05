@@ -21,13 +21,16 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
     console.log("list Consumers");
 
     // get a pg client from the connection pool
+    pg.showPoolInfo();
     pg.connect(function(err, client, done) {
+      pg.showPoolInfo();
       if(handleError(err, client, done, res)) return;
 
       persistence.getAllConsumersSortedByConsumption(client, function(err, consumers) {
         if(handleError(err, client, done, res)) return;
-
+        pg.showPoolInfo();
         done();
+        pg.showPoolInfo();
         res.json(consumers);
       });
     });
