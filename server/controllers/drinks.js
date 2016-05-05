@@ -32,7 +32,6 @@ module.exports = function(pg, persistence, broadcast) {
         if (handleError(err, client, done, res)) return;
         console.log("and again... no error");
         done();
-        console.log(showPoolInfo(pool));
         res.json(drinks);
       });
     });
