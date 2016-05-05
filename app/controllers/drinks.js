@@ -2,36 +2,23 @@
 
 var trim = require('trim');
 
-var handleError = function(err, client, done, res) {
-  // no error occurred, continue with the request
-  if (!err) return false;
+var utils = require('./utils');
 
-  // An error occurred, remove the client from the connection pool.
-  if (client) {
-    done(client);
-  }
-  res.writeHead(500, {
-    'content-type': 'text/plain'
-  });
-  res.end('An error occurred');
-  console.error("Error handler ran on", err);
-  return true;
-};
-
-module.exports = function(pg, persistence, broadcast) {
+module.exports = function(store, broadcast) {
   var drinks = {};
 
   drinks.list = function(req, res) {
     console.log("list Drinks");
 
-    pg.connect(function(err, client, done) {
+    store.connect(function(err, client, done) {
       pg.showPoolInfo();
       console.log("connected");
-      if (handleError(err, client, done, res)) return;
+      if (utils.handleError(err, client, done, res)) { return; }
       console.log("no error");
-      persistence.getAllDrinksByPopularity(client, function(err, drinks) {
+
+      store.getAllDrinksByPopularity(client, function(err, drinks) {
         console.log("returns now from stuff");
-        if (handleError(err, client, done, res)) return;
+        if (utils.handleError(err, client, done, res)) { return; }
         console.log("and again... no error");
         done();
         pg.showPoolInfo();
@@ -52,15 +39,24 @@ module.exports = function(pg, persistence, broadcast) {
       empties: req.body.empties
     };
 
-    pg.connect(function(err, client, done) {
-      if (handleError(err, client, done, res)) return;
+    store.connect(function(err, client, done) {
+      if (utils.handleError(err, client, done, res)) { return; }
 
-      persistence.insertNewDrink(client, drinkdata, function(err, drink) {
-        if (handleError(err, client, done, res)) return;
+      store.insertNewDrink(client, drinkdata, function(err, drink) {
+        if (err) {
+          console.log(err);
+          if (err.code === '23505') {
+            res.status(422).json({
+              error: err.detail,
+              message: err.message
+            });
+            return;
+          }
+          if (utils.handleError(err, client, done, res)) { return; }
+        }
 
         done();
-        res.status(201);
-        res.json(drink);
+        res.status(201).json(drink);
       });
     });
   };
@@ -69,11 +65,18 @@ module.exports = function(pg, persistence, broadcast) {
     console.log("get Drink");
 
     var barcode = req.params.barcode;
-    pg.connect(function(err, client, done) {
-      persistence.getDrinkByBarcode(client, barcode, function(err, drink) {
+    store.connect(function(err, client, done) {
+      if (utils.handleError(err, client, done, res)) { return; }
+
+      store.getDrinkByBarcode(client, barcode, function(err, drink) {
+        if (utils.handleError(err, client, done, res)) { return; }
 
         done();
-        res.json(drink);
+        if (drink) {
+          res.json(drink);
+        } else {
+          res.sendStatus(404);
+        }
       });
     });
   };
@@ -87,8 +90,8 @@ module.exports = function(pg, persistence, broadcast) {
     var quantity = req.body.quantity;
     var empties = req.body.empties;
 
-    pg.connect(function(err, client, done) {
-      persistence.updateDrink(client, fullprice, discountprice, barcode, quantity, empties, function(err, drink) {
+    store.connect(function(err, client, done) {
+      store.updateDrink(client, fullprice, discountprice, barcode, quantity, empties, function(drink) {
 
         broadcast.sendEvent({
           eventtype: 'drinkupdate',
@@ -106,9 +109,9 @@ module.exports = function(pg, persistence, broadcast) {
 
     var barcode = req.params.barcode;
 
-    pg.connect(function(err, client, done) {
-      persistence.getDrinkByBarcode(client, barcode, function(err, drink) {
-        persistence.deleteDrinkById(client, drink.id);
+    store.connect(function(err, client, done) {
+      store.getDrinkByBarcode(client, barcode, function(drink) {
+        store.deleteDrinkById(client, drink.id);
       });
 
       done();
