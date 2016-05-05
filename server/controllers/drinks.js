@@ -23,8 +23,7 @@ module.exports = function(pg, persistence, broadcast) {
     console.log("list Drinks");
 
     pg.connect(function(err, client, done) {
-      var pool = pg.pools.getOrCreate();
-      console.log(showPoolInfo(pool));
+
       console.log("connected");
       if (handleError(err, client, done, res)) return;
       console.log("no error");
@@ -37,6 +36,7 @@ module.exports = function(pg, persistence, broadcast) {
         res.json(drinks);
       });
     });
+    pg.end();
   };
 
   drinks.create = function(req, res) {
