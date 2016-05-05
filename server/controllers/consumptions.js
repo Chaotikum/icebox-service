@@ -53,7 +53,7 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
             message: 'According to records this drink is not avaliable.'
           });
         }
-        persistence.consumeDrink(client, barcode, function(drink) {
+        persistence.consumeDrink(client, barcode, function(err, drink) {
           recordConsumptionForUser(client, "Anon", drink);
 
           done();
