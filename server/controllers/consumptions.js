@@ -53,7 +53,7 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
             message: 'According to records this drink is not avaliable.'
           });
         }
-        persistence.consumeDrink(client, barcode, function(err, drink) {
+        persistence.consumeDrink(client, barcode, function(drink) {
           recordConsumptionForUser(client, "Anon", drink);
 
           done();
@@ -118,18 +118,21 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
       if (handleError(err, client, done, res)) return;
 
       persistence.consumeDrink(client, drink.barcode, function(err, drink) {
+        console.log("drink consumed...");
         consumerPersistence.addDeposit(client, consumer.username, drink.discountprice * (-1), function(err, updatedConsumer) {
+          console.log("deposit subtracted");
           if (consumer.vds) {
+            console.log("...");
             recordConsumptionForUser(client, updatedConsumer.username, drink);
           } else {
-            //TODO: This makes no sense and cant happen...
             recordConsumptionAnonymous(client, drink);
           }
+          console.log("before broadcast.");
           broadcast.sendEvent({
             eventtype: 'consumption',
             drink: drink.barcode
           });
-
+          console.log("after broadcast.");
           done();
           res.status(201);
           res.json(updatedConsumer);
