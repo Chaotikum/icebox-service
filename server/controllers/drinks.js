@@ -23,11 +23,13 @@ module.exports = function(pg, persistence, broadcast) {
     console.log("list Drinks");
 
     pg.connect(function(err, client, done) {
+      console.log("connected");
       if (handleError(err, client, done, res)) return;
-
+      console.log("no error");
       persistence.getAllDrinksByPopularity(client, function(err, drinks) {
+        console.log("returns now from stuff");
         if (handleError(err, client, done, res)) return;
-
+        console.log("and again... no error");
         done();
         res.json(drinks);
       });
