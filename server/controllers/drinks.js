@@ -22,6 +22,9 @@ module.exports = function(pg, persistence, broadcast) {
   drinks.list = function(req, res) {
     console.log("list Drinks");
 
+    var pool = pg.pools.getOrCreate();
+    console.log(showPoolInfo(pool));
+
     pg.connect(function(err, client, done) {
       console.log("connected");
       if (handleError(err, client, done, res)) return;
