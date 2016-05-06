@@ -1,18 +1,6 @@
 'use strict';
 
-var handleError = function(err, client, done, res) {
-  // no error occurred, continue with the request
-  if(!err) return false;
-
-  // An error occurred, remove the client from the connection pool.
-  if(client){
-    done(client);
-  }
-  res.writeHead(500, {'content-type': 'text/plain'});
-  res.end('An error occurred');
-  console.error("Error handler ran on", err);
-  return true;
-};
+var utils = require('./utils');
 
 module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
   var consumers = {};
@@ -21,16 +9,13 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
     console.log("list Consumers");
 
     // get a pg client from the connection pool
-    pg.showPoolInfo();
     pg.connect(function(err, client, done) {
-      pg.showPoolInfo();
-      if(handleError(err, client, done, res)) return;
+      if(utils.handleError(err, client, done, res)) { return; }
 
       persistence.getAllConsumersSortedByConsumption(client, function(err, consumers) {
-        if(handleError(err, client, done, res)) return;
-        pg.showPoolInfo();
+        if(utils.handleError(err, client, done, res)) { return; }
+
         done();
-        pg.showPoolInfo();
         res.json(consumers);
       });
     });
@@ -48,10 +33,10 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
     };
 
     pg.connect(function(err, client, done) {
-      if(handleError(err, client, done, res)) return;
+      if(utils.handleError(err, client, done, res)) { return; }
 
       persistence.insertNewConsumer(client, userdata, function(err, consumer) {
-        if(handleError(err, client, done, res)) return;
+        if(utils.handleError(err, client, done, res)) { return; }
 
         broadcast.sendEvent( {
           eventtype: 'newuser',
@@ -70,10 +55,10 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
     var username = req.params.username;
 
     pg.connect(function(err, client, done) {
-      if(handleError(err, client, done, res)) return;
+      if(utils.handleError(err, client, done, res)) { return; }
 
       persistence.getConsumersByName(client, username, function(err, consumer) {
-        if(handleError(err, client, done, res)) return;
+        if(utils.handleError(err, client, done, res)) { return; }
 
         done();
         res.json(consumer);
@@ -88,13 +73,13 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
     var days = req.params.days;
 
     pg.connect(function(err, client, done) {
-      if(handleError(err, client, done, res)) return;
+      if(utils.handleError(err, client, done, res)) { return; }
 
       persistence.getConsumersByName(client, username, function(err, consumer) {
-        if(handleError(err, client, done, res)) return;
+        if(utils.handleError(err, client, done, res)) { return; }
 
         consumptionsPersistence.getConsumptionRecordsForUser(client, username, days, function(err, consumptions) {
-          if(handleError(err, client, done, res)) return;
+          if(utils.handleError(err, client, done, res)) { return; }
 
           consumer.log = consumptions;
 
@@ -111,10 +96,10 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
     var username = req.params.username;
 
     pg.connect(function(err, client, done) {
-      if(handleError(err, client, done, res)) return;
+      if(utils.handleError(err, client, done, res)) { return; }
 
       persistence.deleteConsumerByName(client, username, function(err) {
-        if(handleError(err, client, done, res)) return;
+        if(utils.handleError(err, client, done, res)) { return; }
 
         done();
         res.json({
@@ -134,10 +119,10 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
     };
 
     pg.connect(function(err, client, done) {
-      if(handleError(err, client, done, res)) return;
+      if(utils.handleError(err, client, done, res)) { return; }
 
       persistence.manipulateConsumer(client, userdata, function(err, consumer) {
-        if(handleError(err, client, done, res)) return;
+        if(utils.handleError(err, client, done, res)) { return; }
 
         done();
         res.json(consumer);
@@ -163,10 +148,10 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
     }
 
     pg.connect(function(err, client, done) {
-      if(handleError(err, client, done, res)) return;
+      if(utils.handleError(err, client, done, res)) { return; }
 
       persistence.addDeposit(client, username, amount, function(err, consumer) {
-        if(handleError(err, client, done, res)) return;
+        if(utils.handleError(err, client, done, res)) { return; }
 
         done();
         res.json(consumer);

@@ -3,13 +3,13 @@
 var bonjour = require('bonjour')();
 var ip = require('ip');
 
-var server = require('./server');
+var app = require('./app');
 
 
 var port = process.env.PORT || 8081;
 
-server.listen(port, function () {
-  var host = server.address;
+app.listen(port, function () {
+  var host = app.address;
 
   bonjour.publish({
     name: 'IceBox',

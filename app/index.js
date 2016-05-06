@@ -7,9 +7,10 @@ var path = require('path');
 
 var broadcast = require('./broadcast/broadcaster.js');
 var persistence = require('./persistence/persistence.js');
+
 var consumersP = require('./persistence/consumers.js');
-var drinksP = require('./persistence/drinks.js');
 var consumptionsP = require('./persistence/consumptions.js');
+var drinksP = require('./persistence/drinks.js');
 
 var consumers = require('./controllers/consumers.js')(persistence, consumersP, broadcast, consumptionsP);
 var consumptions = require('./controllers/consumptions.js')(persistence, drinksP, consumersP, consumptionsP, broadcast);
