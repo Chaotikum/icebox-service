@@ -56,8 +56,12 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
         persistence.consumeDrink(client, barcode, function(err, drink) {
           recordConsumptionForUser(client, "Anon", drink);
 
-          done();
-          res.json(drink);
+          consumerPersistence.getConsumersByName(client, "Anon", function(err, consumer) {
+            done();
+
+            res.status(201);
+            res.json(consumer);
+          });
         });
       });
     });
@@ -83,7 +87,7 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
           if (consumer.ledger > 0) {
             var price = drink.discountprice;
           }
-          if (consumer.ledger < price && consumer.username != "Anon") {
+          if (consumer.ledger < price) {
             done();
             res.status(402);
             res.json({
@@ -115,6 +119,7 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
     });
   }
 
+
   function consumeDrink(res, consumer, drink) {
     console.log("consume drink " + drink.name + " " + consumer.username);
 
@@ -128,8 +133,6 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
           if (consumer.vds) {
             console.log("...");
             recordConsumptionForUser(client, updatedConsumer.username, drink);
-          } else {
-            recordConsumptionAnonymous(client, drink);
           }
           console.log("before broadcast.");
           broadcast.sendEvent({
@@ -150,11 +153,6 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
 
     consumptionsPersistence.recordConsumption(client, username, drink.barcode);
 
-  }
-
-  function recordConsumptionAnonymous(client, drink) {
-
-    consumptionsPersistence.recordConsumption(client, "Anon", drink.barcode);
   }
 
   return consumptions;
