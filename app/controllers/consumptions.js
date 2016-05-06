@@ -1,20 +1,6 @@
 'use strict';
 
-var handleError = function(err, client, done, res) {
-  // no error occurred, continue with the request
-  if (!err) return false;
-
-  // An error occurred, remove the client from the connection pool.
-  if (client) {
-    done(client);
-  }
-  res.writeHead(500, {
-    'content-type': 'text/plain'
-  });
-  res.end('An error occurred');
-  console.error("Error handler ran on", err);
-  return true;
-};
+var utils = require('./utils');
 
 module.exports = function(pg, persistence, consumerPersistence, consumptionsPersistence, broadcast) {
   var consumptions = {};
@@ -27,7 +13,7 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
     console.log("days back: "+days);
 
     pg.connect(function(err, client, done) {
-      if (handleError(err, client, done, res)) return;
+      if (utils.handleError(err, client, done, res)) { return; }
 
       consumptionsPersistence.getAllConsumptionRecords(client, days, function(consumptionRecords) {
         done();
@@ -43,10 +29,12 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
     var barcode = req.body.barcode;
 
     pg.connect(function(err, client, done) {
-      if (handleError(err, client, done, res)) return;
+      if (utils.handleError(err, client, done, res)) { return; }
+
 
       persistence.getDrinkByBarcode(client, barcode, function(err, drink) {
-        if (drink.quantity == 0) {
+        if (utils.handleError(err, client, done, res)) { return; }
+        if (drink.quantity === 0) {
           done();
           res.status(412);
           res.json({
@@ -54,10 +42,12 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
           });
         }
         persistence.consumeDrink(client, barcode, function(err, drink) {
+          if (utils.handleError(err, client, done, res)) { return; }
+
           recordConsumptionForUser(client, "Anon", drink);
 
           consumerPersistence.getConsumersByName(client, "Anon", function(err, consumer) {
-            done();
+          done();
 
             res.status(201);
             res.json(consumer);
@@ -75,17 +65,17 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
     var barcode = req.body.barcode;
 
     pg.connect(function(err, client, done) {
-      if (handleError(err, client, done, res)) return;
+      if (utils.handleError(err, client, done, res)) { return; }
 
       persistence.getDrinkByBarcode(client, barcode, function(err, drink) {
         console.log(JSON.stringify(drink));
         consumerPersistence.getConsumersByName(client, username, function(err, consumer) {
-          if (handleError(err, client, done, res)) return;
+          if (utils.handleError(err, client, done, res)) { return; }
 
           console.log("1 " + JSON.stringify(consumer));
           var price = drink.fullprice;
           if (consumer.ledger > 0) {
-            var price = drink.discountprice;
+            price = drink.discountprice;
           }
           if (consumer.ledger < price) {
             done();
@@ -94,7 +84,7 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
               message: 'Insfficient Funds'
             });
           } else {
-            if (drink.quantity == 0) {
+            if (drink.quantity === 0) {
               done();
               res.status(412);
               res.json({
@@ -112,19 +102,18 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
 
   consumptions.getConsumptionRecordsForUser = function(username, callback) {
     pg.connect(function(err, client, done) {
-      if (handleError(err, client, done, res)) return;
+      if (utils.handleError(err, client, done, res)) { return; }
 
       consumptionsPersistence.getConsumptionRecordsForUser(client, username, callback);
       done();
     });
   }
 
-
   function consumeDrink(res, consumer, drink) {
     console.log("consume drink " + drink.name + " " + consumer.username);
 
     pg.connect(function(err, client, done) {
-      if (handleError(err, client, done, res)) return;
+      if (utils.handleError(err, client, done, res)) { return; }
 
       persistence.consumeDrink(client, drink.barcode, function(err, drink) {
         console.log("drink consumed...");
