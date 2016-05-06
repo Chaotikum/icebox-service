@@ -41,74 +41,31 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
     console.log("create Consumption");
 
     var barcode = req.body.barcode;
+    var username = req.body.username;
 
-    pg.connect(function(err, client, done) {
-      if (handleError(err, client, done, res)) return;
+    if(username == undefined) {
+      createAnonymousConsumtion(res, barcode);
+    } else {
+      createConsumtionWithUser(res, barcode, username);
+    }
 
-      persistence.getDrinkByBarcode(client, barcode, function(err, drink) {
-        if (drink.quantity == 0) {
-          done();
-          res.status(412);
-          res.json({
-            message: 'According to records this drink is not avaliable.'
-          });
-        }
-        persistence.consumeDrink(client, barcode, function(err, drink) {
-          recordConsumptionForUser(client, "Anon", drink);
-
-          consumerPersistence.getConsumersByName(client, "Anon", function(err, consumer) {
-            done();
-
-            res.status(201);
-            res.json(consumer);
-          });
-        });
-      });
-    });
   };
 
-
+ /*
+  * DEPRECATED!
+  */
   consumptions.createWithConsumer = function(req, res) {
     console.log("create Consumption with Consumer");
 
     var username = req.params.username;
     var barcode = req.body.barcode;
 
-    pg.connect(function(err, client, done) {
-      if (handleError(err, client, done, res)) return;
-
-      persistence.getDrinkByBarcode(client, barcode, function(err, drink) {
-        console.log(JSON.stringify(drink));
-        consumerPersistence.getConsumersByName(client, username, function(err, consumer) {
-          if (handleError(err, client, done, res)) return;
-
-          console.log("1 " + JSON.stringify(consumer));
-          var price = drink.fullprice;
-          if (consumer.ledger > 0) {
-            var price = drink.discountprice;
-          }
-          if (consumer.ledger < price) {
-            done();
-            res.status(402);
-            res.json({
-              message: 'Insfficient Funds'
-            });
-          } else {
-            if (drink.quantity == 0) {
-              done();
-              res.status(412);
-              res.json({
-                message: 'According to records this drink is not avaliable.'
-              });
-            } else {
-              done();
-              consumeDrink(res, consumer, drink);
-            }
-          }
-        });
-      });
-    });
-  };
+    if(username == "Anon") {
+      createAnonymousConsumtion(res, barcode);
+    } else {
+      createConsumtionWithUser(res, barcode, username);
+    }
+  }
 
   consumptions.getConsumptionRecordsForUser = function(username, callback) {
     pg.connect(function(err, client, done) {
@@ -119,28 +76,85 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
     });
   }
 
+  function createAnonymousConsumtion(res, barcode) {
+      consumeDrinkIfAvaliable(res, barcode, "Anon", true);
+  }
 
-  function consumeDrink(res, consumer, drink) {
-    console.log("consume drink " + drink.name + " " + consumer.username);
+
+  function createConsumtionWithUser(res, barcode, username) {
+    pg.connect(function(err, client, done) {
+      if (handleError(err, client, done, res)) return;
+
+      persistence.getDrinkByBarcode(client, barcode, function(err, drink) {
+
+        consumerPersistence.getConsumersByName(client, username, function(err, consumer) {
+          if (handleError(err, client, done, res)) return;
+
+          if (consumer.ledger < drink.discountprice) {
+            done();
+            res.status(402);
+            res.json({
+              message: 'Insfficient Funds'
+            });
+          } else {
+            done();
+            consumeDrinkIfAvaliable(res, barcode, username, false);
+          }
+        });
+      });
+    });
+  }
+
+  function consumeDrinkIfAvaliable(res, barcode, username, payFullPrice) {
+    console.log("consume drink If Avaliable" + barcode + " " + username);
 
     pg.connect(function(err, client, done) {
       if (handleError(err, client, done, res)) return;
 
-      persistence.consumeDrink(client, drink.barcode, function(err, drink) {
-        console.log("drink consumed...");
-        consumerPersistence.addDeposit(client, consumer.username, drink.discountprice * (-1), function(err, updatedConsumer) {
-          console.log("deposit subtracted");
-          if (consumer.vds) {
-            console.log("...");
+      persistence.getDrinkByBarcode(client, barcode, function(err, drink) {
+
+        if (drink.quantity == 0) {
+          done();
+
+          res.status(412);
+          res.json({
+            message: 'According to records this drink is not avaliable.'
+          });
+        } else {
+          done();
+          consumeDrink(res, barcode, username, payFullPrice);
+        }
+      });
+    });
+  }
+
+  function consumeDrink(res, barcode, username, payFullPrice) {
+      console.log("consume drink " + barcode + " " + username);
+      pg.connect(function(err, client, done) {
+        if (handleError(err, client, done, res)) return;
+
+        persistence.consumeDrink(client, barcode, function(err, drink) {
+
+        var price = drink.discountprice * (-1);
+        if(payFullPrice) {
+          price = drink.fullprice * (-1);
+        }
+
+        consumerPersistence.addDeposit(client, username, price, function(err, updatedConsumer) {
+
+          if (updatedConsumer.vds) {
             recordConsumptionForUser(client, updatedConsumer.username, drink);
+          } else {
+            recordConsumptionForUser(client, "Anon", drink);
           }
-          console.log("before broadcast.");
+
           broadcast.sendEvent({
             eventtype: 'consumption',
             drink: drink.barcode
           });
-          console.log("after broadcast.");
+
           done();
+
           res.status(201);
           res.json(updatedConsumer);
         })
