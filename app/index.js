@@ -32,7 +32,7 @@ app.use(cors()); // Support cross orgin requests
 
 //Doku
 app.get('/', function(req, res) {
-  res.sendFile(path.join(__dirname + '/doku/apidoku.html'));
+  res.sendFile(path.join(__dirname + '/../doku/apidoku.html'));
 });
 
 // Map routes to controller functions
