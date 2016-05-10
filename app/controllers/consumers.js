@@ -1,7 +1,7 @@
 'use strict';
 
 var utils = require('./utils');
-var escape = require('escape-html');
+var trim = require('trim');
 
 module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
   var consumers = {};
@@ -29,8 +29,17 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
     // create issues on the client side.
     console.log("Request body:", req.body);
 
+    var escapedName = trim(req.body.username);
+
+    if(escapedName == "") {
+      res.status(400);
+      res.json({
+        message: 'Empty String Not Allowed'
+      });
+    }
+
     var userdata = {
-      username: escape(req.body.username);
+      username: escapedName
     };
 
     pg.connect(function(err, client, done) {
@@ -53,7 +62,7 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
   consumers.show = function(req, res) {
     console.log("show Consumer");
 
-    var username = req.params.username;
+    var username = trim(req.params.username);
 
     pg.connect(function(err, client, done) {
       if(utils.handleError(err, client, done, res)) { return; }
@@ -70,7 +79,7 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
   consumers.showHistory = function(req, res) {
     console.log("show Consumer With History");
 
-    var username = req.params.username;
+    var username = trim(req.params.username);
     var days = req.params.days;
 
     pg.connect(function(err, client, done) {
@@ -94,7 +103,7 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
   consumers.destroy = function(req, res) {
     console.log("delete Consumer");
 
-    var username = req.params.username;
+    var username = trim(req.params.username);
 
     pg.connect(function(err, client, done) {
       if(utils.handleError(err, client, done, res)) { return; }
@@ -114,7 +123,7 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
     console.log("manipulate Consumer");
 
     var userdata = {
-      username: req.params.username,
+      username: trim(req.params.username),
       avatarmail: req.body.avatarmail,
       vds: req.body.vds
     };
@@ -134,7 +143,7 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
   consumers.addDeposit = function(req, res) {
     console.log("add Deposit");
 
-    var username = req.params.username;
+    var username = trim(req.params.username);
     var amount = req.body.amount;
 
     console.log("username", username);

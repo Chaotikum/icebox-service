@@ -26,8 +26,8 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
   consumptions.create = function(req, res) {
     console.log("create Consumption");
 
-    var barcode = req.body.barcode;
-    var username = req.body.username;
+    var barcode = trim(req.body.barcode);
+    var username = trim(req.body.username);
 
     if(username == undefined) {
       createAnonymousConsumtion(res, barcode);
@@ -42,7 +42,7 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
   consumptions.createWithConsumer = function(req, res) {
     console.log("create Consumption with Consumer");
 
-    var username = req.params.username;
+    var username = trim(req.params.username);
     var barcode = req.body.barcode;
 
     if(username == "Anon") {

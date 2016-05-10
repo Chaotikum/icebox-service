@@ -1,5 +1,7 @@
 'use strict';
 
+var trim = require('trim');
+
 var handleError = function(err, client, done, res) {
   // no error occurred, continue with the request
   if (!err) return false;
@@ -42,8 +44,8 @@ module.exports = function(pg, persistence, broadcast) {
     console.log("create Drink");
 
     var drinkdata = {
-      name: escape(req.body.name),
-      barcode: escape(req.body.barcode),
+      name: trim(req.body.name),
+      barcode: trim(req.body.barcode),
       fullprice: req.body.fullprice,
       discountprice: req.body.discountprice,
       quantity: req.body.quantity,
