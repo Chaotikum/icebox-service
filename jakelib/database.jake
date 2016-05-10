@@ -1,10 +1,24 @@
 var pg = require('pg');
 
-var connectionConfig = {
-  user: 'iceboxuser',
-  password: 'testForIce',
-  database: 'icobox'
-};
+var iceboxuser = process.env.ICEBOX_DB_USER;
+var iceboxpsw = process.env.ICEBOX_DB_PSW;
+var iceboxname = process.env.ICEBOX_DB_NAME;
+
+var connectionConfig = {};
+
+if(iceboxuser) {
+connectionConfig = {
+    user: iceboxuser,
+    password: iceboxpsw,
+    database: iceboxname
+  };
+} else {
+connectionConfig = {
+    user: 'iceboxuser',
+    password: 'testForIce',
+    database: 'icobox'
+  };
+}
 
 namespace('db', function() {
 

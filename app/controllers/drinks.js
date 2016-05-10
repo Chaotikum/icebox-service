@@ -42,8 +42,8 @@ module.exports = function(pg, persistence, broadcast) {
     console.log("create Drink");
 
     var drinkdata = {
-      name: req.body.name,
-      barcode: req.body.barcode,
+      name: escape(req.body.name),
+      barcode: escape(req.body.barcode),
       fullprice: req.body.fullprice,
       discountprice: req.body.discountprice,
       quantity: req.body.quantity,

@@ -1,6 +1,7 @@
 'use strict';
 
 var utils = require('./utils');
+var escape = require('escape-html');
 
 module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
   var consumers = {};
@@ -29,7 +30,7 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
     console.log("Request body:", req.body);
 
     var userdata = {
-      username: req.body.username
+      username: escape(req.body.username);
     };
 
     pg.connect(function(err, client, done) {
