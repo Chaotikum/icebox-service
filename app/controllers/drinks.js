@@ -4,13 +4,13 @@ var trim = require('trim');
 
 var utils = require('./utils');
 
-module.exports = function(store, broadcast) {
+module.exports = function(pg, store, broadcast) {
   var drinks = {};
 
   drinks.list = function(req, res) {
     console.log("list Drinks");
 
-    store.connect(function(err, client, done) {
+    pg.connect(function(err, client, done) {
       pg.showPoolInfo();
       console.log("connected");
       if (utils.handleError(err, client, done, res)) { return; }
@@ -39,7 +39,7 @@ module.exports = function(store, broadcast) {
       empties: req.body.empties
     };
 
-    store.connect(function(err, client, done) {
+    pg.connect(function(err, client, done) {
       if (utils.handleError(err, client, done, res)) { return; }
 
       store.insertNewDrink(client, drinkdata, function(err, drink) {
@@ -65,7 +65,7 @@ module.exports = function(store, broadcast) {
     console.log("get Drink");
 
     var barcode = req.params.barcode;
-    store.connect(function(err, client, done) {
+    pg.connect(function(err, client, done) {
       if (utils.handleError(err, client, done, res)) { return; }
 
       store.getDrinkByBarcode(client, barcode, function(err, drink) {
@@ -90,7 +90,7 @@ module.exports = function(store, broadcast) {
     var quantity = req.body.quantity;
     var empties = req.body.empties;
 
-    store.connect(function(err, client, done) {
+    pg.connect(function(err, client, done) {
       store.updateDrink(client, fullprice, discountprice, barcode, quantity, empties, function(drink) {
 
         broadcast.sendEvent({
@@ -109,7 +109,7 @@ module.exports = function(store, broadcast) {
 
     var barcode = req.params.barcode;
 
-    store.connect(function(err, client, done) {
+    pg.connect(function(err, client, done) {
       store.getDrinkByBarcode(client, barcode, function(drink) {
         store.deleteDrinkById(client, drink.id);
       });
