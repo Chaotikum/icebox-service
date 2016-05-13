@@ -1,6 +1,7 @@
 'use strict';
 
 var utils = require('./utils');
+var trim = require('trim');
 
 module.exports = function(pg, persistence, consumerPersistence, consumptionsPersistence, broadcast) {
   var consumptions = {};
