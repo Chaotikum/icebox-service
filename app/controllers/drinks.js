@@ -91,7 +91,7 @@ module.exports = function(pg, store, broadcast) {
     var empties = req.body.empties;
 
     pg.connect(function(err, client, done) {
-      store.updateDrink(client, fullprice, discountprice, barcode, quantity, empties, function(drink) {
+      store.updateDrink(client, fullprice, discountprice, barcode, quantity, empties, function(err, drink) {
 
         broadcast.sendEvent({
           eventtype: 'drinkupdate',
