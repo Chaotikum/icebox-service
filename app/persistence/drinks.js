@@ -36,7 +36,10 @@ exports.insertNewDrink = function(client, data, callback) {
     "VALUES ($1, $2, $3, $4, $5, $6)",
     [data.name, data.barcode, data.fullprice, data.discountprice, data.quantity, data.empties],
     function(err, result) {
-      if(err) callback(err);
+      if(err) {
+        callback(err);
+        return;
+      }
 
       exports.getDrinkByBarcode(client, data.barcode, callback);
     });
@@ -65,8 +68,11 @@ exports.getDrinkByBarcode = function(client, barcode, callback) {
     function(err, result) {
       console.log("return drink... ");
 
-      if(err) callback(err);
-
+      if(err) {
+        callback(err);
+        return;
+      }
+      
       callback(err, result.rows[0]);
     });
 };
