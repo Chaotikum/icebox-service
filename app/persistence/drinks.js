@@ -64,6 +64,9 @@ exports.getDrinkByBarcode = function(client, barcode, callback) {
     [barcode],
     function(err, result) {
       console.log("return drink... ");
+
+      if(err) callback(err);
+
       callback(err, result.rows[0]);
     });
 };
