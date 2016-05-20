@@ -36,6 +36,7 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
       res.json({
         message: 'Empty String Not Allowed'
       });
+      return;
     }
 
     var userdata = {
