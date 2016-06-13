@@ -1,6 +1,11 @@
 var pg = require('pg');
 
-var connectionString = process.env.ICEBOX_DB_URL || 'postgres://iceboxuser:testForIce@localhost:5432/icobox';
+var iceboxuser = process.env.ICEBOX_DB_USER;
+var iceboxpsw = process.env.ICEBOX_DB_PSW;
+var iceboxname = process.env.ICEBOX_DB_NAME;
+
+var connectionString = process.env.ICEBOX_DB_URL ||
+  `postgres://${iceboxuser}:${iceboxpsw}@localhost:5432/${iceboxname}`;
 
 pg.defaults.poolSize = 20;
 
