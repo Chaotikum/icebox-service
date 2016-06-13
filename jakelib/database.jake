@@ -1,179 +1,75 @@
-var pg = require('pg');
+'use strict';
 
-var iceboxuser = process.env.ICEBOX_DB_USER;
-var iceboxpsw = process.env.ICEBOX_DB_PSW;
-var iceboxname = process.env.ICEBOX_DB_NAME;
+var Sequelize = require('sequelize');
+var persistence = require('../lib/persistence');
 
-var connectionConfig = {};
+var Promise = Sequelize.Promise;
 
-if(iceboxuser) {
-connectionConfig = {
-    user: iceboxuser,
-    password: iceboxpsw,
-    database: iceboxname
-  };
-} else {
-connectionConfig = {
-    user: 'iceboxuser',
-    password: 'testForIce',
-    database: 'icobox'
-  };
-}
+var Consumer = persistence.Consumer;
+var Consumption = persistence.Consumption;
+var Drink = persistence.Drink;
+
 
 namespace('db', function() {
-
   desc('Create tables');
-  task('create', function() {
+  task('create', {async: true}, function() {
     console.log('Create tables');
 
-    var client = new pg.Client(connectionConfig);
-    client.connect(function(err) {
-      if (err) {
-        return console.error('Could not connect to postgres', err);
-      }
-
-      client.query(
-        'CREATE TABLE IF NOT EXISTS drinks (' +
-        'id SERIAL PRIMARY KEY, ' +
-        'name VARCHAR(200) not null UNIQUE, ' +
-        'barcode VARCHAR(200) not null UNIQUE, ' +
-        'fullprice INTEGER not null CONSTRAINT positive_fullprice CHECK (fullprice > 0), ' +
-        'discountprice INTEGER not null CONSTRAINT positive_disocuntprice CHECK (discountprice > 0 AND fullprice >= discountprice), ' +
-        'quantity INTEGER not null CONSTRAINT positive_quantity CHECK (quantity >= 0), ' +
-        'empties INTEGER not null CONSTRAINT positive_empties CHECK (empties >= 0))',
-        function(err) {
-          if(err) {
-            return console.error('error creating drinks table', err);
-          }
-          console.log('Created drinks table');
-        });
-
-      client.query(
-        'CREATE TABLE IF NOT EXISTS consumers (' +
-        'id SERIAL PRIMARY KEY, ' +
-        'username VARCHAR(200) not null UNIQUE, ' +
-        'ledger INTEGER not null CONSTRAINT positive_ledger CHECK (ledger >= 0), ' +
-        'avatarmail VARCHAR(254), ' +
-        'vds BOOLEAN, ' +
-        'lastchange TIMESTAMP DEFAULT current_timestamp)',
-        function(err) {
-          if(err) {
-            return console.error('error creating consumers table', err);
-          }
-          console.log('Created consumers table');
-        });
-
-      client.query(
-        'CREATE TABLE IF NOT EXISTS consumptions (' +
-        'id SERIAL PRIMARY KEY, ' +
-        'consumetime TIMESTAMP DEFAULT current_timestamp, ' +
-        'consumer_id SERIAL REFERENCES consumers (id), ' +
-        'drink_id SERIAL REFERENCES drinks (id))',
-        function(err) {
-          if(err) {
-            return console.error('error creating consumptions table', err);
-          }
-          console.log('Created consumptions table');
-        });
-
-      client.query(
-        'INSERT INTO consumers (username, ledger, vds) ' +
-        'VALUES (\'Anon\', 0, true)',
-        function(err) {
-          if(err) {
-            return console.error('error creating Anon user', err);
-          }
-          console.log('Created Anon user');
-        });
-    });
-
-    client.on('drain', client.end.bind(client));
+    persistence.db.sync()
+      .then(complete);
   });
 
   desc('Insert seed data');
-  task('seed', function() {
+  task('seed', {async: true}, function() {
     console.log('Insert seed data');
 
-    var client = new pg.Client(connectionConfig);
-    client.connect(function(err) {
-      if (err) {
-        return console.error('Could not connect to postgres', err);
-      }
+    var p = [];
 
-      client.query(
-        'INSERT INTO consumers (username, ledger, vds)' +
-        'VALUES ' +
-          '(\'tvluke\', 375, true), ' +
-          '(\'bülülülüp\', 125, true),' +
-          '(\'jonnyT\', 250, true)',
-        function(err) {
-          if(err) {
-            return console.error('error creating sample users', err);
-          }
-          console.log('Created sample users');
-        });
+    p.push(Consumer.bulkCreate([
+      {username: 'tvluke', ledger: 375, vds: true},
+      {username: 'bülülülüp', ledger: 125, vds: true},
+      {username: 'jonnyT', ledger: 250, vds: true},
+    ]));
 
-      client.query(
-        'INSERT INTO drinks (name, barcode, fullprice, discountprice, quantity, empties)' +
-        'VALUES ' +
+    p.push(Drink.bulkCreate([
+      {name: 'viva con Agua laut', barcode: '4027109007880', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
+      {name: 'viva con Agua leise', barcode: '4027109007897', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
+      {name: 'Sophie Classic', barcode: '4001228512777', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
+      {name: 'Sophie Leise', barcode: '4001228512791', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
 
-          '(\'viva con Agua laut\', \'4027109007880\', 150, 125, 200, 0),' +
-          '(\'viva con Agua leise\', \'4027109007897\', 150, 125, 200, 0),' +
-          '(\'Sophie Classic\', \'4001228512777\', 150, 125, 200, 0),' +
-          '(\'Sophie Leise\', \'4001228512791\', 150, 125, 200, 0),' +
+      {name: 'flora power', barcode: '4260031874056', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
+      {name: 'Mio Mate', barcode: '4002846034504', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
+      {name: 'Club Mate', barcode: '4029764001807', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
 
-          '(\'flora power\', \'4260031874056\', 150, 125, 200, 0),' +
-          '(\'Mio Mate\', \'4002846034504\', 150, 125, 200, 0),' +
-          '(\'Club Mate\', \'4029764001807\', 150, 125, 200, 0),' +
+      {name: 'Wostok Birne (0.3l)', barcode: '4260189210072', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
+      {name: 'Wostok Tanne (0.3l)', barcode: '426018210010', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
+      {name: 'Wostok Aprikose (0.3l)', barcode: '4260189210096', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
+      {name: 'Wostok Plaume (0.3l)', barcode: '4260189210614', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
+      {name: 'Wostok Dattel (0.5l)', barcode: '4260189210041', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
+      {name: 'Wostok Grün (0.5l)', barcode: '4260189210065', fullprice: 150, discountprice: 125, quantity: 0, empties: 0},
 
-          '(\'Wostok Birne (0.3l)\', \'4260189210072\', 150, 125, 200, 0),' +
-          '(\'Wostok Tanne (0.3l)\', \'426018210010\', 150, 125, 200, 0),' +
-          '(\'Wostok Aprikose (0.3l)\', \'4260189210096\', 150, 125, 200, 0),' +
-          '(\'Wostok Plaume (0.3l)\', \'4260189210614\', 150, 125, 200, 0),' +
-          '(\'Wostok Dattel (0.5l)\', \'4260189210041\', 150, 125, 200, 0),' +
-          '(\'Wostok Grün (0.5l)\', \'4260189210065\', 150, 125, 0, 0),' +
+      {name: 'fritz-kola Kaffee', barcode: '4260107220039', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
+      {name: 'fritz-limo Orange', barcode: '4260107220114', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
+      {name: 'fritz-limo Zitrone', barcode: '4260107220077', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
+      {name: 'fritz-spritz Apfel', barcode: '4260107222514', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
 
-          '(\'fritz-kola Kaffee\', \'4260107220039\', 150, 125, 200, 0),' +
-          '(\'fritz-limo Orange\', \'4260107220114\', 150, 125, 200, 0),' +
-          '(\'fritz-limo Zitrone\', \'4260107220077\', 150, 125, 200, 0),' +
-          '(\'fritz-spritz Apfel\', \'4260107222514\', 150, 125, 200, 0),' +
+      {name: 'Premium Cola (0.5l)', barcode: '4260199999999', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
 
-          '(\'Premium Cola (0.5l)\', \'4260199999999\', 150, 125, 200, 0),' +
+      {name: 'Müllers Malz', barcode: '4023216000110', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
 
-          '(\'Müllers Malz\', \'4023216000110\', 150, 125, 200, 0),' +
+      {name: 'Paulaner Hefe', barcode: '4066600641919', fullprice: 150, discountprice: 125, quantity: 200, empties: 0},
+    ]));
 
-          '(\'Paulaner Hefe\', \'4066600641919\', 150, 125, 200, 0)',
-        function(err) {
-          if(err) {
-            return console.error('error creating sample drinks', err);
-          }
-          console.log('Created sample drinks');
-        });
-
-      client.on('drain', client.end.bind(client));
-    });
+    Promise.all(p).then(complete);
   });
 
   desc('Drop database');
-  task('drop', function() {
+  task('drop', {async: true}, function() {
     console.log('Drop tables');
 
-    var client = new pg.Client(connectionConfig);
-    client.connect(function(err) {
-      if (err) {
-        return console.error('could not connect to postgres', err);
-      }
-
-      client.query('DROP TABLE IF EXISTS drinks, consumers, consumptions',
-        function(err) {
-          if(err) {
-            return console.error('error running query', err);
-          }
-          console.log('Dropped all tables');
-        });
-
-      client.on('drain', client.end.bind(client));
-    });
+    Promise.each([Consumption, Consumer, Drink], function(table) {
+      return table.drop();
+    }).then(complete);
   });
 
 });

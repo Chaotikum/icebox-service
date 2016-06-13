@@ -1,25 +1,28 @@
 'use strict';
 
 var utils = require('./utils');
+
 var trim = require('trim');
 
-module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
+module.exports = function(persistence, broadcast) {
+  var json_attributes = ['username', 'avatarmail', 'ledger', 'vds', 'lastchange'];
+
   var consumers = {};
 
   consumers.list = function(req, res) {
     console.log("list Consumers");
 
-    // get a pg client from the connection pool
-    pg.connect(function(err, client, done) {
-      if(utils.handleError(err, client, done, res)) { return; }
-
-      persistence.getAllConsumersSortedByConsumption(client, function(err, consumers) {
-        if(utils.handleError(err, client, done, res)) { return; }
-
-        done();
-        res.json(consumers);
-      });
-    });
+    persistence.Consumer.findAll({
+      include: [{
+        model: persistence.Consumption,
+        attributes: [],
+      }],
+      attributes: json_attributes,
+      group: 'consumer.id',
+      order: [[persistence.db.fn('COUNT', persistence.db.col('consumptions.id')), 'DESC']],
+    }).then(function(consumers) {
+      res.json(consumers);
+    }).catch(utils.handleError(res));
   };
 
   consumers.create = function(req, res) {
@@ -29,122 +32,128 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
     // create issues on the client side.
     console.log("Request body:", req.body);
 
-    var escapedName = trim(req.body.username);
-
-    if(escapedName == "") {
-      res.status(400);
+    if (req.body.username !== trim(req.body.username)) {
+      res.status(422);
       res.json({
-        message: 'Empty String Not Allowed'
+        message: 'username must not start or end with whitespace'
       });
       return;
     }
 
-    var userdata = {
-      username: escapedName
-    };
-
-    pg.connect(function(err, client, done) {
-      if(utils.handleError(err, client, done, res)) { return; }
-
-      persistence.insertNewConsumer(client, userdata, function(err, consumer) {
-        if(utils.handleError(err, client, done, res)) { return; }
-
-        broadcast.sendEvent( {
-          eventtype: 'newuser',
-          user: consumer.username
-        });
-
-        done();
-        res.json(consumer);
+    if (req.body.username === "Anon") {
+      res.status(422);
+      res.json({
+        message: '"Anon" is not a valid username'
       });
-    });
+      return;
+    }
+
+    persistence.Consumer.create({
+      username: req.body.username, vds: true
+    }).then(function(consumer) {
+      broadcast.sendEvent( {
+        eventtype: 'newuser',
+        user: consumer.username
+      });
+
+      res.json(utils.filterObject(json_attributes, consumer));
+    }).catch(utils.handleError(res));
   };
 
   consumers.show = function(req, res) {
     console.log("show Consumer");
 
-    var username = trim(req.params.username);
+    persistence.Consumer.findOne({
+      where: {username: req.params.username}, attributes: json_attributes
+    }).then(function(consumer) {
+      if (!consumer) {
+        res.writeHead(404, {'content-type': 'text/plain'});
+        res.end('Not found');
+        throw null;
+      }
 
-    pg.connect(function(err, client, done) {
-      if(utils.handleError(err, client, done, res)) { return; }
-
-      persistence.getConsumersByName(client, username, function(err, consumer) {
-        if(utils.handleError(err, client, done, res)) { return; }
-
-        done();
-        res.json(consumer);
-      });
-    });
+      res.json(consumer);
+    }).catch(utils.handleError(res));
   };
 
   consumers.showHistory = function(req, res) {
     console.log("show Consumer With History");
 
-    var username = trim(req.params.username);
-    var days = req.params.days;
+    persistence.Consumer.findOne({
+      where: {username: req.params.username}, attributes: json_attributes,
+      include: [{
+        model: persistence.Consumption,
+        attributes: ['consumetime'],
+        where: { consumetime: { $gt: new Date(new Date() - req.params.days * 24 * 60 * 60 * 1000) } },
+        required: false,
+        include: [{
+          model: persistence.Drink,
+          attributes: ['name', 'barcode']
+        }],
+      }]
+    }).then(function(consumer) {
+      if (!consumer) {
+        res.writeHead(404, {'content-type': 'text/plain'});
+        res.end('Not found');
+        throw null;
+      }
 
-    pg.connect(function(err, client, done) {
-      if(utils.handleError(err, client, done, res)) { return; }
-
-      persistence.getConsumersByName(client, username, function(err, consumer) {
-        if(utils.handleError(err, client, done, res)) { return; }
-
-        consumptionsPersistence.getConsumptionRecordsForUser(client, username, days, function(err, consumptions) {
-          if(utils.handleError(err, client, done, res)) { return; }
-
-          consumer.log = consumptions;
-
-          done();
-          res.json(consumer);
-        });
+      var ret = utils.filterObject(json_attributes, consumer);
+      ret.logs = consumer.consumptions.map(function(c) {
+        return {
+          consumetime: c.consumetime,
+          username: consumer.username,
+          name: c.drink.name,
+          barcode: c.drink.barcode,
+        };
       });
-    });
+
+      res.json(ret);
+    }).catch(utils.handleError(res));
   };
 
   consumers.destroy = function(req, res) {
     console.log("delete Consumer");
 
-    var username = trim(req.params.username);
-
-    pg.connect(function(err, client, done) {
-      if(utils.handleError(err, client, done, res)) { return; }
-
-      persistence.deleteConsumerByName(client, username, function(err) {
-        if(utils.handleError(err, client, done, res)) { return; }
-
-        done();
-        res.json({
-          message: 'User deleted.'
-        });
+    persistence.Consumer.destroy({
+      where: {username: req.params.username}
+    }).then(function(deleted) {
+      res.json({
+        message: 'User deleted.'
       });
-    });
+    }).catch(utils.handleError(res));
   };
 
   consumers.manipulate = function(req, res) {
     console.log("manipulate Consumer");
 
-    var userdata = {
-      username: trim(req.params.username),
-      avatarmail: req.body.avatarmail,
-      vds: req.body.vds
-    };
+    // TODO: validate input
 
-    pg.connect(function(err, client, done) {
-      if(utils.handleError(err, client, done, res)) { return; }
+    persistence.Consumer.findOne({
+      where: {username: req.params.username}
+    }).then(function(consumer) {
+      if (!consumer) {
+        res.writeHead(404, {'content-type': 'text/plain'});
+        res.end('Not found');
+        throw null;
+      }
 
-      persistence.manipulateConsumer(client, userdata, function(err, consumer) {
-        if(utils.handleError(err, client, done, res)) { return; }
+      if (req.body.avatarmail)
+        consumer.avatarmail = req.body.avatarmail;
 
-        done();
-        res.json(consumer);
+      if (req.body.vds)
+        consumer.vds = req.body.vds;
+
+      return consumer.save().then(function() {
+        res.json(utils.filterObject(json_attributes, consumer));
       });
-    });
+    }).catch(utils.handleError(res));
   };
 
   consumers.addDeposit = function(req, res) {
     console.log("add Deposit");
 
-    var username = trim(req.params.username);
+    var username = req.params.username;
     var amount = req.body.amount;
 
     console.log("username", username);
@@ -156,19 +165,27 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
       res.json({
         message: 'Only positive amounts over 500 allowed.'
       });
+      return;
     }
 
-    pg.connect(function(err, client, done) {
-      if(utils.handleError(err, client, done, res)) { return; }
+    persistence.Consumer.findOne({
+      where: {username: req.params.username}
+    }).then(function(consumer) {
+      if (!consumer) {
+        res.writeHead(404, {'content-type': 'text/plain'});
+        res.end('Not found');
+        throw null;
+      }
 
-      persistence.addDeposit(client, username, amount, function(err, consumer) {
-        if(utils.handleError(err, client, done, res)) { return; }
-
-        done();
-        res.json(consumer);
+      return consumer.increment('ledger', {
+        by: amount
+      }).then(function() {
+        return consumer.reload();
+      }).then(function() {
+        res.json(utils.filterObject(json_attributes, consumer));
       });
-    });
-  };
+    }).catch(utils.handleError(res));
+  }
 
   return consumers;
 };

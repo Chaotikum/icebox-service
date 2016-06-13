@@ -5,16 +5,12 @@ var cors = require('cors');
 var express = require('express');
 var path = require('path');
 
-var broadcast = require('./broadcast/broadcaster.js');
-var persistence = require('./persistence/persistence.js');
+var persistence = require('../lib/persistence');
+var broadcast = require('./broadcast/broadcaster');
 
-var consumersP = require('./persistence/consumers.js');
-var consumptionsP = require('./persistence/consumptions.js');
-var drinksP = require('./persistence/drinks.js');
-
-var consumers = require('./controllers/consumers.js')(persistence, consumersP, broadcast, consumptionsP);
-var consumptions = require('./controllers/consumptions.js')(persistence, drinksP, consumersP, consumptionsP, broadcast);
-var drinks = require('./controllers/drinks.js')(persistence, drinksP, broadcast);
+var consumers = require('./controllers/consumers')(persistence, broadcast);
+var consumptions = require('./controllers/consumptions')(persistence, broadcast);
+var drinks = require('./controllers/drinks')(persistence, broadcast);
 
 
 var app = express();

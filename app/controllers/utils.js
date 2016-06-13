@@ -1,15 +1,19 @@
-var handleError = function(err, client, done, res) {
-  // no error occurred, continue with the request
-  if(!err) return false;
+exports.handleError = function(res) {
+  return function(err) {
+    // Promises may reject with null to signal that a response has already been sent
+    if (!err)
+      return;
 
-  // An error occurred, remove the client from the connection pool.
-  if(client){
-    done(client);
+    res.writeHead(500, {'content-type': 'text/plain'});
+    res.end('An error occurred');
+    console.error("Error handler ran on", err);
   }
-  res.writeHead(500, {'content-type': 'text/plain'});
-  res.end('An error occurred');
-  console.error("Error handler ran on", err);
-  return true;
 };
 
-exports.handleError = handleError;
+exports.filterObject = function(keys, obj) {
+  var v = {};
+  keys.forEach(function(attr) {
+    v[attr] = obj[attr];
+  });
+  return v;
+};
