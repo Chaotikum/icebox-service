@@ -1,9 +1,13 @@
 'use strict';
 
 var utils = require('./utils');
-var trim = require('trim');
+var Sequelize = require('sequelize');
 
-module.exports = function(pg, persistence, consumerPersistence, consumptionsPersistence, broadcast) {
+var Promise = Sequelize.Promise;
+
+module.exports = function(persistence, broadcast) {
+  var json_attributes = ['name', 'barcode', 'fullprice', 'discountprice', 'quantity', 'empties'];
+
   var consumptions = {};
 
   consumptions.getConsumptionRecords = function(req, res) {
@@ -13,147 +17,164 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
 
     console.log("days back: "+days);
 
-    pg.connect(function(err, client, done) {
-      if (utils.handleError(err, client, done, res)) { return; }
-
-      consumptionsPersistence.getAllConsumptionRecords(client, days, function(consumptionRecords) {
-        done();
-        res.status(200);
-        res.json(consumptionRecords);
-      });
-    });
+    persistence.Consumption.findAll({
+      attributes: ['consumetime'],
+      where: { consumetime: { $gt: new Date(new Date() - days * 24 * 60 * 60 * 1000) } },
+      include: [{
+        model: persistence.Consumer,
+        attributes: ['username']
+      }, {
+        model: persistence.Drink,
+        attributes: ['name', 'barcode']
+      }],
+    }).then(function(consumptions) {
+      res.json(consumptions.map(function(c) {
+        var ret = {
+          consumetime: c.consumetime,
+          name: c.drink.name,
+          barcode: c.drink.barcode,
+        };
+        if (c.consumer)
+          ret.username = c.consumer.username;
+        return ret;
+      }));
+    }).catch(utils.handleError(res));
   }
 
   consumptions.create = function(req, res) {
     console.log("create Consumption");
 
-    var barcode = trim(req.body.barcode);
-    if(req.body.username != undefined) {
-      var username = trim(req.body.username);
-    }
+    var username = req.body.username;
+    var barcode = req.body.barcode;
 
-    if(username == undefined) {
-      createAnonymousConsumtion(res, barcode);
-    } else {
-      createConsumtionWithUser(res, barcode, username);
-    }
+    lookupAndConsumeDrink(res, barcode, username);
   };
 
- /*
-  * DEPRECATED!
-  */
+  /*
+   * DEPRECATED!
+   */
   consumptions.createWithConsumer = function(req, res) {
     console.log("create Consumption with Consumer");
 
-    var username = trim(req.params.username);
+    var username = req.params.username;
     var barcode = req.body.barcode;
 
-    if(username == "Anon") {
-      createAnonymousConsumtion(res, barcode);
-    } else {
-      createConsumtionWithUser(res, barcode, username);
+    if (username === "Anon")
+      username = undefined;
+
+    lookupAndConsumeDrink(res, barcode, username);
+  }
+
+  function lookupAndConsumeDrink(res, barcode, username, payFullPrice) {
+    console.log("consume drink " + barcode + " " + username);
+
+    var payFullPrice = false;
+    if (!username)
+      payFullPrice = true;
+
+    var pConsumer = null;
+
+    if (username) {
+      pConsumer = persistence.Consumer.findOne({
+        where: {username: username}
+      });
     }
-  }
-
-  consumptions.getConsumptionRecordsForUser = function(username, callback) {
-    pg.connect(function(err, client, done) {
-      if (utils.handleError(err, client, done, res)) { return; }
-
-      consumptionsPersistence.getConsumptionRecordsForUser(client, username, callback);
-      done();
+    var pDrink = persistence.Drink.findOne({
+      where: {barcode: barcode}
     });
-  }
 
-  function createAnonymousConsumtion(res, barcode) {
-      consumeDrinkIfAvaliable(res, barcode, "Anon", true);
-  }
-
-  function createConsumtionWithUser(res, barcode, username) {
-    pg.connect(function(err, client, done) {
-      if (utils.handleError(err, client, done, res)) { return; }
-
-      persistence.getDrinkByBarcode(client, barcode, function(err, drink) {
-
-        consumerPersistence.getConsumersByName(client, username, function(err, consumer) {
-          if (utils.handleError(err, client, done, res)) { return; }
-
-          if (consumer.ledger < drink.discountprice) {
-            done();
-            res.status(402);
-            res.json({
-              message: 'Insfficient Funds'
-            });
-          } else {
-            done();
-            consumeDrinkIfAvaliable(res, barcode, username, false);
-          }
+    Promise.join(pConsumer, pDrink, function(consumer, drink) {
+      if (username && !consumer) {
+        res.status(422);
+        res.json({
+          message: 'username not found'
         });
+        throw null;
+      }
+      if (!drink) {
+        res.status(422);
+        res.json({
+          message: 'barcode not found'
+        });
+        throw null;
+      }
+
+      var price;
+
+      if (payFullPrice) {
+        price = drink.fullprice;
+      }
+      else {
+        price = drink.discountprice;
+      }
+
+      return consumeDrink(res, drink, consumer, price);
+    }).catch(utils.handleError(res));
+  }
+
+  function consumeDrink(res, drink, consumer, price) {
+    return chargeConsumer(
+      res, consumer, price
+    ).then(function() {
+      // Get user to record consumption for
+      return getVDSConsumer(consumer);
+    }).then(function(vdsConsumer) {
+      // Record consumption
+      return persistence.Consumption.create({
+        consumerId: vdsConsumer,
+        drinkId: drink.id,
       });
+    }).then(function() {
+      broadcast.sendEvent({
+        eventtype: 'consumption',
+        drink: drink.barcode
+      });
+
+      res.status(201);
+      res.json(consumer);
     });
   }
 
-  function consumeDrinkIfAvaliable(res, barcode, username, payFullPrice) {
-    console.log("consume drink If Avaliable" + barcode + " " + username);
+  function chargeConsumer(res, consumer, price) {
+    if (!consumer)
+      return Promise.resolve();
 
-    pg.connect(function(err, client, done) {
-      if (utils.handleError(err, client, done, res)) { return; }
-
-      persistence.getDrinkByBarcode(client, barcode, function(err, drink) {
-
-        if (drink.quantity == 0) {
-          done();
-
-          res.status(412);
-          res.json({
-            message: 'According to records this drink is not avaliable.'
-          });
-        } else {
-          done();
-          consumeDrink(res, barcode, username, payFullPrice);
-        }
+    return persistence.db.transaction({
+      isolationLevel: Sequelize.Transaction.ISOLATION_LEVELS.SERIALIZABLE
+    }, function (t) {
+      return consumer.decrement('ledger', {
+        by: price,
+        transaction: t
+      }).then(function() {
+        return consumer.reload({
+          transaction: t
+        });
+      }).then(function() {
+        /* As decrement() is done completely in SQL, Sequelize's validators
+         * don't run. Call them explicitly and throw the result to cause a
+         * rollback if necessary */
+        return consumer.validate();
+      }).then(function(err) {
+        if (err)
+          throw err;
       });
+    }).catch(Sequelize.ValidationError, function(err) {
+      res.status(402);
+      res.json({
+        message: 'Insfficient Funds'
+      });
+
+      throw null;
     });
   }
 
- function consumeDrink(res, barcode, username, payFullPrice) {
-      console.log("consume drink " + barcode + " " + username);
-      pg.connect(function(err, client, done) {
-        if (utils.handleError(err, client, done, res)) { return; }
-
-        persistence.consumeDrink(client, barcode, function(err, drink) {
-
-        var price = drink.discountprice * (-1);
-        if(payFullPrice) {
-          price = drink.fullprice * (-1);
-        }
-
-        consumerPersistence.addDeposit(client, username, price, function(err, updatedConsumer) {
-
-          if (updatedConsumer.vds) {
-            recordConsumptionForUser(client, updatedConsumer.username, drink);
-          } else {
-            recordConsumptionForUser(client, "Anon", drink);
-          }
-
-          broadcast.sendEvent({
-            eventtype: 'consumption',
-            drink: drink.barcode
-          });
-
-          done();
-
-          res.status(201);
-          res.json(updatedConsumer);
-        })
-      });
-    });
-  }
-
-  function recordConsumptionForUser(client, username, drink) {
-    console.log("recordConsumptionForUser ->" + username + " " + drink.name);
-
-    consumptionsPersistence.recordConsumption(client, username, drink.barcode);
-
+  function getVDSConsumer(consumer) {
+    if (consumer && consumer.vds) {
+      return consumer.id;
+    }
+    else {
+      return null;
+    }
   }
 
   return consumptions;
