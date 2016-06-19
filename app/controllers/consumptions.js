@@ -194,8 +194,8 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
         res.status(201);
         //TODO: return undo data.
         undoCode["barcode"]=drink.barcode;
-        undoCode["username"]=username;
-        updatedConsumer["undoparameters"] =undoCode;
+        undoCode["username"]=updatedConsumer.username;
+        updatedConsumer["undoparameters"] = undoCode;
         res.json(updatedConsumer);
       });
     });
