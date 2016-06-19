@@ -47,6 +47,7 @@ app.post('/consumers', consumers.create);
 app.get('/consumers/:username', consumers.show);
 app.get('/consumers/:username/history/:days', consumers.showHistory);
 app.post('/consumers/:username/deposit', consumers.addDeposit);
+app.put('/consumers/:username/deposit', consumers.setDeposit);
 app.delete('/consumers/:username', consumers.destroy);
 app.put('/consumers/:username', consumers.manipulate);
 

@@ -105,3 +105,15 @@ exports.addDeposit = function(client, username, amount, callback) {
     });
   }
 };
+
+exports.setDeposit = function(client, username, amount, callback) {
+  var result = [];
+  if (username == "Anon") {
+    exports.getConsumersByName(client, username, callback);
+  } else {
+    var query = client.query("UPDATE consumers SET ledger = ($2), lastchange = CURRENT_TIMESTAMP WHERE username = ($1)", [username, amount]);
+    query.on('end', function() {
+      exports.getConsumersByName(client, username, callback);
+    });
+  }
+};

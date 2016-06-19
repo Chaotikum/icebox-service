@@ -168,16 +168,16 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
         consumerPersistence.addDeposit(client, username, price, function(err, updatedConsumer) {
 
           if (updatedConsumer.vds) {
-            recordConsumptionForUser(res, client, updatedConsumer.username, drink);
+            recordConsumptionForUser(res, client, updatedConsumer.username, drink, updatedConsumer);
           } else {
-            recordConsumptionForUser(res, client, "Anon", drink);
+            recordConsumptionForUser(res, client, "Anon", drink, updatedConsumer);
           }
         })
       });
     });
   }
 
-  function recordConsumptionForUser(res, client, username, drink) {
+  function recordConsumptionForUser(res, client, username, drink, updatedConsumer) {
     console.log("recordConsumptionForUser ->" + username + " " + drink.name);
     pg.connect(function(err, client, done) {
       if (utils.handleError(err, client, done, res)) { return; }
@@ -195,7 +195,8 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
         //TODO: return undo data.
         undoCode["barcode"]=drink.barcode;
         undoCode["username"]=username;
-        res.json(undoCode);
+        updatedConsumer["undoparameters"] =undoCode;
+        res.json(updatedConsumer);
       });
     });
 

@@ -170,5 +170,34 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
     });
   };
 
+  consumers.setDeposit = function(req, res) {
+    console.log("setDeposit");
+
+    var username = trim(req.params.username);
+    var amount = req.body.amount;
+
+    console.log("username", username);
+    console.log("amount", amount);
+
+    if (amount < 500) {
+      console.log("<500");
+      res.status(422);
+      res.json({
+        message: 'Only positive amounts over 500 allowed.'
+      });
+    }
+
+    pg.connect(function(err, client, done) {
+      if(utils.handleError(err, client, done, res)) { return; }
+
+      persistence.setDeposit(client, username, amount, function(err, consumer) {
+        if(utils.handleError(err, client, done, res)) { return; }
+
+        done();
+        res.json(consumer);
+      });
+    });
+  };
+
   return consumers;
 };
