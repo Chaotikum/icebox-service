@@ -11,17 +11,26 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
 
     var days = req.params.days;
 
-    console.log("days back: "+days);
+    days = parseInt(days, 10);
+    if(typeof days==='number' && (days%1)===0) {
 
-    pg.connect(function(err, client, done) {
-      if (utils.handleError(err, client, done, res)) { return; }
+      console.log("days back: "+days);
 
-      consumptionsPersistence.getAllConsumptionRecords(client, days, function(consumptionRecords) {
-        done();
-        res.status(200);
-        res.json(consumptionRecords);
+      pg.connect(function(err, client, done) {
+        if (utils.handleError(err, client, done, res)) { return; }
+
+        consumptionsPersistence.getAllConsumptionRecords(client, days, function(consumptionRecords) {
+          done();
+          res.status(200);
+          res.json(consumptionRecords);
+        });
       });
-    });
+    } else {
+      res.status(400);
+      res.json({
+        message: 'Not a number'
+      });
+    }
   }
 
   consumptions.create = function(req, res) {
@@ -54,6 +63,35 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
       createConsumtionWithUser(res, barcode, username);
     }
   }
+
+  consumptions.undo = function(req, res) {
+    console.log("undo Consmption")
+
+      var consumptionId = req.body.id;
+      var username = trim(req.body.username);
+      var barcode = trim(req.body.barcode);
+
+      pg.connect(function(err, client, done) {
+        if (utils.handleError(err, client, done, res)) { return; }
+
+        consumptionsPersistence.removeConsumptionRecord(client, consumptionId, function() {
+          persistence.getDrinkByBarcode(client, barcode, function(err, drink) {
+            persistence.updateDrink(client, drink.fullprice, drink.discountprice, drink.barcode, (drink.quantity+1), (drink.empties-1), function(err, drink) {
+                if(username == "Anon") {
+                  res.status(201);
+                } else {
+                  consumerPersistence.getConsumersByName(client, username, function(err, consumer) {
+                    consumerPersistence.addDeposit(client, username, 125, function(err, updatedConsumer) {
+                      res.status(201);
+                      res.json(updatedConsumer);
+                    });
+                  });
+                }
+            });
+          });
+        });
+      });
+    }
 
   consumptions.getConsumptionRecordsForUser = function(username, callback) {
     pg.connect(function(err, client, done) {
@@ -130,29 +168,36 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
         consumerPersistence.addDeposit(client, username, price, function(err, updatedConsumer) {
 
           if (updatedConsumer.vds) {
-            recordConsumptionForUser(client, updatedConsumer.username, drink);
+            recordConsumptionForUser(res, client, updatedConsumer.username, drink);
           } else {
-            recordConsumptionForUser(client, "Anon", drink);
+            recordConsumptionForUser(res, client, "Anon", drink);
           }
-
-          broadcast.sendEvent({
-            eventtype: 'consumption',
-            drink: drink.barcode
-          });
-
-          done();
-
-          res.status(201);
-          res.json(updatedConsumer);
         })
       });
     });
   }
 
-  function recordConsumptionForUser(client, username, drink) {
+  function recordConsumptionForUser(res, client, username, drink) {
     console.log("recordConsumptionForUser ->" + username + " " + drink.name);
+    pg.connect(function(err, client, done) {
+      if (utils.handleError(err, client, done, res)) { return; }
 
-    consumptionsPersistence.recordConsumption(client, username, drink.barcode);
+      consumptionsPersistence.recordConsumption(client, username, drink.barcode, function(undoCode) {
+
+        broadcast.sendEvent({
+          eventtype: 'consumption',
+          drink: drink.barcode
+        });
+
+        done();
+
+        res.status(201);
+        //TODO: return undo data.
+        undoCode["barcode"]=drink.barcode;
+        undoCode["username"]=username;
+        res.json(undoCode);
+      });
+    });
 
   }
 

@@ -1,19 +1,28 @@
 'use strict';
 
-exports.recordConsumption = function(client, username, barcode) {
+//TODO: add Callback
+exports.recordConsumption = function(client, username, barcode, callback) {
   console.log("persistence, record consumptions " + username + " " + barcode);
   var query2 = client.query("SELECT * FROM drinks WHERE barcode = ($1)", [barcode]);
   query2.on('row', function(drink) {
     var query1 = client.query("SELECT * FROM consumers WHERE username = ($1)", [username]);
     query1.on('row', function(consumer) {
-      recordConsumptionWithIds(client, consumer.id, drink.id);
+      recordConsumptionWithIds(client, consumer.id, drink.id, callback);
     });
   });
 };
 
-function recordConsumptionWithIds(client, consumer_id, drink_id) {
+function recordConsumptionWithIds(client, consumer_id, drink_id, callback) {
   console.log("recordConsumptionWithIds");
-  var query = client.query("INSERT INTO consumptions (consumetime, consumer_id, drink_id) values (CURRENT_TIMESTAMP, $1, $2)", [consumer_id, drink_id]);
+  client.query("INSERT INTO consumptions (consumetime, consumer_id, drink_id) values (CURRENT_TIMESTAMP, $1, $2) RETURNING id", [consumer_id, drink_id],
+    function(err, result) {
+      if(err) {
+        console.log(err);
+      } else {
+        callback(result.rows[0]);
+      }
+    }
+  );
 }
 
 exports.getAllConsumptionRecords = function(client, days, callback) {
@@ -58,5 +67,13 @@ exports.getConsumptionRecordsForUser = function(client, username, days, callback
   });
   query.on('end', function(result) {
     callback(null, result.rows);
+  });
+};
+
+exports.removeConsumptionRecord = function(client, consumptionId, callback) {
+  var query = client.query("DELETE FROM consumptions WHERE id=($1)", [consumptionId]);
+
+  query.on('end', function(results) {
+    callback();
   });
 };
