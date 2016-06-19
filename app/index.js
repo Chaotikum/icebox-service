@@ -53,6 +53,7 @@ app.put('/consumers/:username', consumers.manipulate);
 app.get('/consumptions/:days', consumptions.getConsumptionRecords);
 app.post('/consumptions/:username', consumptions.createWithConsumer);
 app.post('/consumptions', consumptions.create);
+app.delete('/consumptions', consumptions.undo);
 
 // Export app object
 module.exports = app;

@@ -1,8 +1,8 @@
 var pg = require('pg');
 
-var iceboxuser = process.env.ICEBOX_DB_USER;
-var iceboxpsw = process.env.ICEBOX_DB_PSW;
-var iceboxname = process.env.ICEBOX_DB_NAME;
+var iceboxuser = process.env.ICEBOX_DB_USER || 'iceboxuser';
+var iceboxpsw = process.env.ICEBOX_DB_PSW || 'testForIce';
+var iceboxname = process.env.ICEBOX_DB_NAME || 'icobox';
 
 var connectionString = process.env.ICEBOX_DB_URL ||
   `postgres://${iceboxuser}:${iceboxpsw}@localhost:5432/${iceboxname}`;
