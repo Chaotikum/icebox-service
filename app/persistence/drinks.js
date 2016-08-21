@@ -52,7 +52,7 @@ exports.updateDrink = function(client, fullprice, discountprice, barcode, quanti
   });
 };
 
-exports.deleteDrinkById = function(client, barcode) {
+exports.deleteDrinkById = function(client, barcode, callback) {
   var query = client.query(
     "SELECT id " +
     "FROM drinks " +
