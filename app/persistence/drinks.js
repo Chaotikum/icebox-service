@@ -52,10 +52,26 @@ exports.updateDrink = function(client, fullprice, discountprice, barcode, quanti
   });
 };
 
-exports.deleteDrinkById = function(client, drinkId) {
-  client.query(
-    "DELETE FROM drinks WHERE id=($1)",
-    [drinkId]);
+exports.deleteDrinkById = function(client, barcode) {
+  var query = client.query(
+    "SELECT id " +
+    "FROM drinks " +
+    "WHERE barcode=($1) ORDER BY id ASC",
+    [barcode],
+    function(err, result) {
+      console.log(result.rows[0]);
+      var query = client.query(
+        "DELETE FROM consumptions " +
+        "WHERE drink_id = ($1)", [result.rows[0].id],
+        function(err) {
+          var query = client.query(
+            "DELETE FROM drinks " +
+            "WHERE barcode= ($1)", [barcode],
+            function(err) {
+              callback(err);
+            });
+        });
+    })
 };
 
 exports.getDrinkByBarcode = function(client, barcode, callback) {
@@ -72,7 +88,7 @@ exports.getDrinkByBarcode = function(client, barcode, callback) {
         callback(err);
         return;
       }
-      
+
       callback(err, result.rows[0]);
     });
 };
