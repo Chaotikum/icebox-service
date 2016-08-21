@@ -114,7 +114,9 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
 
         consumerPersistence.getConsumersByName(client, username, function(err, consumer) {
           if (utils.handleError(err, client, done, res)) { return; }
-
+          if(!consumer || consumer == undefined) {
+            return;
+          }
           if (consumer.ledger < drink.discountprice) {
             done();
             res.status(402);
@@ -122,11 +124,11 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
               message: 'Insfficient Funds'
             });
           } else {
-            done();
             consumeDrinkIfAvaliable(res, barcode, username, false);
           }
         });
       });
+      done();
     });
   }
 
@@ -146,10 +148,10 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
             message: 'According to records this drink is not avaliable.'
           });
         } else {
-          done();
           consumeDrink(res, barcode, username, payFullPrice);
         }
       });
+         done();
     });
   }
 
@@ -174,6 +176,7 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
           }
         })
       });
+      done();
     });
   }
 
