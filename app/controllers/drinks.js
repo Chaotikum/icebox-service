@@ -110,14 +110,16 @@ module.exports = function(pg, store, broadcast) {
     var barcode = req.params.barcode;
 
     pg.connect(function(err, client, done) {
-      store.getDrinkByBarcode(client, barcode, function(drink) {
-        store.deleteDrinkById(client, drink.id);
-      });
+      store.deleteDrinkById(client, barcode, function(err) {
+        if(utils.handleError(err, client, done, res)) { return; }
 
-      done();
-      res.end();
+        done();
+        res.json({
+          message: 'Drink deleted.'
+        });
     });
-  };
+  });
+};
 
   return drinks;
 };
