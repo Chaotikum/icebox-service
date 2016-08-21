@@ -86,10 +86,22 @@ exports.deleteConsumerByName = function(client, username, callback) {
     exports.getConsumersByName(client, username, callback);
   } else {
     var query = client.query(
-      "DELETE FROM consumers " +
-      "WHERE username = ($1)", [username],
-      function(err) {
-        callback(err);
+      "SELECT id " +
+      "FROM consumers " +
+      "WHERE username = ($1) ORDER BY username ASC", [username],
+      function(err, result) {
+        console.log(result.rows[0]);
+        var query = client.query(
+          "DELETE FROM consumptions " +
+          "WHERE consumer_id = ($1)", [result.rows[0].id],
+          function(err) {
+            var query = client.query(
+              "DELETE FROM consumers " +
+              "WHERE username = ($1)", [username],
+              function(err) {
+                callback(err);
+              });
+          });
       });
   }
 };
