@@ -55,6 +55,7 @@ app.get('/consumptions/:days', consumptions.getConsumptionRecords);
 app.post('/consumptions/:username', consumptions.createWithConsumer);
 app.post('/consumptions', consumptions.create);
 app.delete('/consumptions', consumptions.undo);
+app.delete('/consumptions/:id/:barcode/:username', consumptions.undoWithPar);
 
 // Export app object
 module.exports = app;
