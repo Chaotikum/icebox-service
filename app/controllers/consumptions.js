@@ -71,27 +71,43 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
       var username = trim(req.body.username);
       var barcode = trim(req.body.barcode);
 
-      pg.connect(function(err, client, done) {
-        if (utils.handleError(err, client, done, res)) { return; }
+      undoConsumption(consumptionId, barcode, username, res);
+    }
 
-        consumptionsPersistence.removeConsumptionRecord(client, consumptionId, function() {
-          persistence.getDrinkByBarcode(client, barcode, function(err, drink) {
-            persistence.updateDrink(client, drink.fullprice, drink.discountprice, drink.barcode, (drink.quantity+1), (drink.empties-1), function(err, drink) {
-                if(username == "Anon") {
-                  res.status(201);
-                } else {
-                  consumerPersistence.getConsumersByName(client, username, function(err, consumer) {
-                    consumerPersistence.addDeposit(client, username, 125, function(err, updatedConsumer) {
-                      res.status(201);
-                      res.json(updatedConsumer);
-                    });
+    consumptions.undoWithPar = function(req, res) {
+      console.log("undo Consmption")
+
+        var consumptionId = req.params.id;
+        var barcode = trim(req.params.barcode);
+        var username = trim(req.params.username);
+
+        undoConsumption(consumptionId, barcode, username, res);
+      }
+
+  function undoConsumption(consumptionId, barcode, username, res) {
+    pg.connect(function(err, client, done) {
+      if (utils.handleError(err, client, done, res)) { return; }
+
+      consumptionsPersistence.removeConsumptionRecord(client, consumptionId, function() {
+        persistence.getDrinkByBarcode(client, barcode, function(err, drink) {
+          persistence.updateDrink(client, drink.fullprice, drink.discountprice, drink.barcode, (drink.quantity+1), (drink.empties-1), function(err, drink) {
+              if(username == "Anon") {
+                console.log("-150");
+                res.status(201);
+              } else {
+                console.log("-125");
+                consumerPersistence.getConsumersByName(client, username, function(err, consumer) {
+                  consumerPersistence.addDeposit(client, username, 125, function(err, updatedConsumer) {
+                    res.status(201);
+                    res.json(updatedConsumer);
                   });
-                }
-            });
+                });
+              }
           });
         });
       });
-    }
+    });
+  }
 
   consumptions.getConsumptionRecordsForUser = function(username, callback) {
     pg.connect(function(err, client, done) {
@@ -168,7 +184,11 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
         }
 
         consumerPersistence.addDeposit(client, username, price, function(err, updatedConsumer) {
-
+          if(payFullPrice) {
+            console.log("+150");
+          } else {
+            console.log("+125");
+          }
           if (updatedConsumer.vds) {
             recordConsumptionForUser(res, client, updatedConsumer.username, drink, updatedConsumer);
           } else {
