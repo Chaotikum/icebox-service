@@ -68,7 +68,8 @@ namespace('db', function() {
         'id SERIAL PRIMARY KEY, ' +
         'consumetime TIMESTAMP DEFAULT current_timestamp, ' +
         'consumer_id SERIAL REFERENCES consumers (id), ' +
-        'drink_id SERIAL REFERENCES drinks (id))',
+        'drink_id SERIAL REFERENCES drinks (id)), '+
+        'payment INTEGER not null DEFAULT 0',
         function(err) {
           if(err) {
             return console.error('error creating consumptions table', err);
@@ -88,6 +89,28 @@ namespace('db', function() {
     });
 
     client.on('drain', client.end.bind(client));
+  });
+
+  desc('Insert new payment column into consumption table if needed');
+  task('addPayment', function() {
+    console.log('Add payment to consumption')
+
+    var client = new pg.Client(connectionConfig);
+    client.connect(function(err) {
+      if (err) {
+        return console.error('Could not connect to postgres', err);
+      }
+
+      client.query(
+        'ALTER TABLE consumptions ADD COLUMN payment INTEGER not null DEFAULT 0',
+        function(err) {
+          if(err) {
+            return console.error('error adding table', err);
+          }
+          console.log('Created new comumn');
+        });
+        client.on('drain', client.end.bind(client));
+      });
   });
 
   desc('Insert seed data');
