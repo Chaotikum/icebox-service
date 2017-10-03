@@ -1,20 +1,19 @@
 'use strict';
 
-//TODO: add Callback
-exports.recordConsumption = function(client, username, barcode, callback) {
+exports.recordConsumption = function(client, username, barcode, payment, callback) {
   console.log("persistence, record consumptions " + username + " " + barcode);
   var query2 = client.query("SELECT * FROM drinks WHERE barcode = ($1)", [barcode]);
   query2.on('row', function(drink) {
     var query1 = client.query("SELECT * FROM consumers WHERE username = ($1)", [username]);
     query1.on('row', function(consumer) {
-      recordConsumptionWithIds(client, consumer.id, drink.id, callback);
+      recordConsumptionWithIds(client, consumer.id, drink.id, payment, callback);
     });
   });
 };
 
-function recordConsumptionWithIds(client, consumer_id, drink_id, callback) {
-  console.log("recordConsumptionWithIds");
-  client.query("INSERT INTO consumptions (consumetime, consumer_id, drink_id) values (CURRENT_TIMESTAMP, $1, $2) RETURNING id", [consumer_id, drink_id],
+function recordConsumptionWithIds(client, consumer_id, drink_id, payment, callback) {
+  console.log("recordConsumptionWithIds "+ payment);
+  client.query("INSERT INTO consumptions (consumetime, consumer_id, drink_id, payment) values (CURRENT_TIMESTAMP, $1, $2, $3) RETURNING id", [consumer_id, drink_id, payment],
     function(err, result) {
       if(err) {
         console.log(err);
@@ -31,7 +30,7 @@ exports.getAllConsumptionRecords = function(client, days, callback) {
   var d = new Date();
   d.setDate(d.getDate()-days);
 
-  var query = client.query("SELECT consumptions.consumetime, consumers.username, drinks.barcode, drinks.name " +
+  var query = client.query("SELECT consumptions.consumetime, consumers.username, drinks.barcode, drinks.name, consumptions.payment " +
     "FROM consumptions LEFT OUTER JOIN consumers ON (consumptions.consumer_id = consumers.id) " +
     "LEFT OUTER JOIN drinks ON (consumptions.drink_id = drinks.id) " +
     "WHERE consumptions.consumetime > ($1) " +
@@ -51,7 +50,7 @@ exports.getConsumptionRecordsForUser = function(client, username, days, callback
   var d = new Date();
   d.setDate(d.getDate()-days);
 
-  var query = client.query("SELECT consumptions.consumetime, consumers.username, drinks.barcode, drinks.name " +
+  var query = client.query("SELECT consumptions.consumetime, consumers.username, drinks.barcode, drinks.name,  consumptions.payment" +
     "FROM consumptions " +
     "LEFT OUTER JOIN consumers ON (consumptions.consumer_id = consumers.id) " +
     "LEFT OUTER JOIN drinks ON (consumptions.drink_id = drinks.id) " +
