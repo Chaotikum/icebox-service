@@ -190,9 +190,9 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
             console.log("+125");
           }
           if (updatedConsumer.vds) {
-            recordConsumptionForUser(res, client, updatedConsumer.username, drink, updatedConsumer);
+            recordConsumptionForUser(res, client, updatedConsumer.username, drink, updatedConsumer, price);
           } else {
-            recordConsumptionForUser(res, client, "Anon", drink, updatedConsumer);
+            recordConsumptionForUser(res, client, "Anon", drink, updatedConsumer, price);
           }
         })
       });
@@ -200,12 +200,12 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
     });
   }
 
-  function recordConsumptionForUser(res, client, username, drink, updatedConsumer) {
+  function recordConsumptionForUser(res, client, username, drink, updatedConsumer, price) {
     console.log("recordConsumptionForUser ->" + username + " " + drink.name);
     pg.connect(function(err, client, done) {
       if (utils.handleError(err, client, done, res)) { return; }
 
-      consumptionsPersistence.recordConsumption(client, username, drink.barcode, function(undoCode) {
+      consumptionsPersistence.recordConsumption(client, username, drink.barcode, price, function(undoCode) {
 
         broadcast.sendEvent({
           eventtype: 'consumption',
