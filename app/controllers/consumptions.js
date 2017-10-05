@@ -181,6 +181,7 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
         var price = drink.discountprice * (-1);
         if(payFullPrice) {
           price = drink.fullprice * (-1);
+          console.log("amount " + price);
         }
 
         consumerPersistence.addDeposit(client, username, price, function(err, updatedConsumer) {
