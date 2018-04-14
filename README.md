@@ -1,6 +1,21 @@
 # icebox-service
 The icebox service. Manage all your beverages.
 
+## Set Up IceBox
+### Set Up The Database
+Icebox uses a PostgreSQL database. 
+
+You have to set up a database and define a user which the icebox may use. Icebox uses environment variables to access the db, so you have to set the values in 
+ * ICEBOX_DB_USER
+ * ICEBOX_DB_PSW
+ * ICEBOX_DB_NAME
+### Set Up Icebox
+Icebox is completly written with nodeJS.
+
+* npm install will install all needed components
+* Using "jake db:create" you can create the tables in the database.
+* npm start will start the service
+
 ## Projects using the service
 * Touch-Client für den Pi auf dem Kühlschrank
   * https://github.com/MotieDesign101/IceBoxTouch
