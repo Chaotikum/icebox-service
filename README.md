@@ -16,7 +16,19 @@ Icebox is completly written with nodeJS.
 * Using "jake db:create" you can create the tables in the database.
 * npm start will start the service
 
+#### Known issues during testing:
+It is currently not possible to run two instances of icebox in the same network due to the bonjour registration. No two services with the same name can exist and a second icebox service will this not start. 
+
+To avoid this, delete the bonjour-registration in the server.js file while testing.
+
+## API-Docs
+The API-Doku is on apiary.
+
+* https://iceboxservice.docs.apiary.io/
+
 ## Projects using the service
+Diese Projekte sind nicht offiziel supported. Run at your own risk and stuff.
+
 * Touch-Client für den Pi auf dem Kühlschrank
   * https://github.com/MotieDesign101/IceBoxTouch
 * Web-Client für icebox.nobreakspace.org
