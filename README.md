@@ -15,6 +15,8 @@ Icebox is completly written with nodeJS.
  * `npm install` will install all needed components
  * `jake db:create` creates the tables in the database.
  * `npm start` will start the service
+ 
+As a test run localhost:8081/drinks and you should get an empty json response.
 
 #### Known issues during testing:
 It is currently not possible to run two instances of icebox in the same network due to the bonjour registration. No two services with the same name can exist and a second icebox service will this not start. 
