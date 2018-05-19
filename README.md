@@ -12,9 +12,13 @@ You have to set up a database and define a user which the icebox may use. Icebox
 ### Set Up Icebox
 Icebox is completly written with nodeJS.
 
-* npm install will install all needed components
-* Using "jake db:create" you can create the tables in the database.
-* npm start will start the service
+ npm install 
+will install all needed components
+
+ jake db:create 
+creates the tables in the database.
+ npm start 
+will start the service
 
 #### Known issues during testing:
 It is currently not possible to run two instances of icebox in the same network due to the bonjour registration. No two services with the same name can exist and a second icebox service will this not start. 
