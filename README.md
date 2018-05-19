@@ -27,7 +27,7 @@ The API-Doku is on apiary.
 * https://iceboxservice.docs.apiary.io/
 
 ## Projects using the service
-Diese Projekte sind nicht offiziel supported. Run at your own risk and stuff.
+These projects are not officially supported. Run at your own risk and stuff.
 
 * Touch-Client für den Pi auf dem Kühlschrank
   * https://github.com/MotieDesign101/IceBoxTouch
