@@ -6,6 +6,8 @@ The icebox service. Manage all your beverages.
 Icebox uses a PostgreSQL database. 
 
 You have to set up a database and define a user which the icebox may use. Icebox uses environment variables to access the db, so you have to set the values in 
+ * ICEBOX_DB_HOST
+ * ICEBOX_DB_PORT
  * ICEBOX_DB_USER
  * ICEBOX_DB_PSW
  * ICEBOX_DB_NAME
