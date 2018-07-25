@@ -1,5 +1,7 @@
 var pg = require('pg');
 
+var iceboxhost = process.env.ICEBOX_DB_HOST;
+var iceboxport = process.env.ICEBOX_DB_PORT;
 var iceboxuser = process.env.ICEBOX_DB_USER;
 var iceboxpsw = process.env.ICEBOX_DB_PSW;
 var iceboxname = process.env.ICEBOX_DB_NAME;
@@ -8,12 +10,16 @@ var connectionConfig = {};
 
 if(iceboxuser) {
 connectionConfig = {
+    host: iceboxhost || 'localhost',
+    port: iceboxport || 5432,
     user: iceboxuser,
     password: iceboxpsw,
     database: iceboxname
   };
 } else {
 connectionConfig = {
+    host: 'localhost',
+    port: 5432,
     user: 'iceboxuser',
     password: 'testForIce',
     database: 'icobox'
