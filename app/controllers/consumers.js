@@ -3,7 +3,7 @@
 var utils = require('./utils');
 var trim = require('trim');
 
-module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
+module.exports = function(pg, persistence, consumptionsPersistence) {
   var consumers = {};
 
   consumers.list = function(req, res) {
@@ -48,11 +48,6 @@ module.exports = function(pg, persistence, broadcast, consumptionsPersistence) {
 
       persistence.insertNewConsumer(client, userdata, function(err, consumer) {
         if(utils.handleError(err, client, done, res)) { return; }
-
-        broadcast.sendEvent( {
-          eventtype: 'newuser',
-          user: consumer.username
-        });
 
         done();
         res.json(consumer);

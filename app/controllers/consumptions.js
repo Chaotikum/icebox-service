@@ -3,7 +3,7 @@
 var utils = require('./utils');
 var trim = require('trim');
 
-module.exports = function(pg, persistence, consumerPersistence, consumptionsPersistence, broadcast) {
+module.exports = function(pg, persistence, consumerPersistence, consumptionsPersistence) {
   var consumptions = {};
 
   consumptions.getConsumptionRecords = function(req, res) {
@@ -183,11 +183,6 @@ module.exports = function(pg, persistence, consumerPersistence, consumptionsPers
       if (utils.handleError(err, client, done, res)) { return; }
 
       consumptionsPersistence.recordConsumption(client, username, drink.barcode, function(undoCode) {
-
-        broadcast.sendEvent({
-          eventtype: 'consumption',
-          drink: drink.barcode
-        });
 
         done();
 

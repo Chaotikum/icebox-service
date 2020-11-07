@@ -4,7 +4,7 @@ var trim = require('trim');
 
 var utils = require('./utils');
 
-module.exports = function(pg, store, broadcast) {
+module.exports = function(pg, store) {
   var drinks = {};
 
   drinks.list = function(req, res) {
@@ -92,11 +92,6 @@ module.exports = function(pg, store, broadcast) {
 
     pg.connect(function(err, client, done) {
       store.updateDrink(client, fullprice, discountprice, barcode, quantity, empties, function(err, drink) {
-
-        broadcast.sendEvent({
-          eventtype: 'drinkupdate',
-          drink: drink.barcode
-        });
 
         done();
         res.json(drink);
