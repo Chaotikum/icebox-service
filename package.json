@@ -26,7 +26,6 @@
   "homepage": "https://github.com/Chaotikum/icebox-service#readme",
   "dependencies": {
     "body-parser": "^1.14.2",
-    "bonjour": "^3.2.0",
     "cors": "2.7.1",
     "express": "^4.13.4",
     "ip": "1.1.1",
@@ -35,11 +34,9 @@
   },
   "devDependencies": {
     "jake": "latest",
-    "jshint": "^2.9.1",
-    "mocha": "^2.4.5",
-    "nodemon": "^1.8.1",
-    "require": "latest",
-    "should": "^8.2.2",
-    "supertest": "^1.2.0"
+    "jshint": "latest",
+    "mocha": "latest",
+    "chai": "latest",
+    "nodemon": "latest"
   }
 }
