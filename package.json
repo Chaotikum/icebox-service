@@ -31,7 +31,7 @@
     "express": "^4.13.4",
     "ip": "1.1.1",
     "pg": "^4.4.4",
-    "trim": "0.0.1"
+    "trim": "^1.0.1"
   },
   "devDependencies": {
     "jake": "latest",
